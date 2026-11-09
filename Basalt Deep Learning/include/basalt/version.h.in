@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2026 Kival
+ * This file is part of the Arkantos AI Stack Suite.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef BASALT_VERSION_H
+#define BASALT_VERSION_H
+
+/* Major, minor, and patch version numbers derived from configure.ac.  */
+#define BASALT_VERSION_MAJOR @BASALT_VERSION_MAJOR@
+#define BASALT_VERSION_MINOR @BASALT_VERSION_MINOR@
+#define BASALT_VERSION_PATCH @BASALT_VERSION_PATCH@
+#define BASALT_VERSION_STRING "@BASALT_VERSION_STRING@"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* Return the library version string (e.g. "0.1.0").  */
+const char *
+basalt_version_string (void);
+
+/* Return the full human-facing version banner first line
+   (e.g. "Basalt Deep Learning 0.1.0").  */
+const char *
+basalt_version_banner (void);
+
+#ifdef __cplusplus
+}
+
+namespace basalt
+{
+
+/* Return the C++ library version string derived from AC_INIT.  */
+inline const char *
+version_string (void) noexcept
+{
+  return basalt_version_string ();
+}
+
+/* Return the full human-facing version banner first line.  */
+inline const char *
+version_banner (void) noexcept
+{
+  return basalt_version_banner ();
+}
+
+} /* namespace basalt */
+#endif
+
+#endif /* BASALT_VERSION_H */

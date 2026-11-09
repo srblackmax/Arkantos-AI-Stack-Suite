@@ -1,0 +1,153 @@
+\input texinfo    @c -*-texinfo-*-
+@c %**start of header
+@setfilename hyper-math.info
+@settitle GNU Hyper Math Manual 0.1.0
+@documentencoding UTF-8
+@c %**end of header
+
+@copying
+This manual is for GNU Hyper Math (version 0.1.0), a clean-room C++20 library
+achieving the functionality of NumPy, SciPy, Pandas, and Polars under the
+GNU Coding Standards.
+
+Copyright @copyright{} 2026 Kival.
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+@end quotation
+@end copying
+
+@dircategory Scientific and Numerical Software
+@direntry
+* Hyper-Math: (hyper-math).     C++20 tensor, scientific, and tabular library.
+@end direntry
+
+@titlepage
+@title GNU Hyper Math
+@subtitle Unified C++20 Numerical, Scientific, and Columnar Library
+@subtitle Version 0.1.0
+@author Kival
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top GNU Hyper Math
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::                Overview and Clean-Room Architecture
+* Tensor Engine::               NumPy-Equivalent N-D Lattice Tensors
+* Scientific Continuum::        SciPy-Equivalent Numerical Subpackages
+* Tabular and Lazy Engine::     Pandas and Polars Columnar DataFrames
+* Index::                       Concept and Function Index
+@end menu
+
+@node Introduction
+@chapter Introduction
+@cindex introduction
+
+GNU Hyper Math (@code{libhypermath}) is a zero-dependency C++20 library
+licensed under the GNU General Public License version 3 or later (GPLv3+).
+It unifies four foundational mathematical paradigms in a single coherent
+architecture:
+
+@itemize @bullet
+@item
+@strong{Hyper-Lattice Tensor Engine (@code{hyper_math::tensor})}:
+64-byte cache-line aligned reference-counted @code{slab_buffer<T>},
+rank-agnostic affine @code{lattice_descriptor}, lazily fused expression
+templates, universal functions, Einstein summation (@code{einsum}), and
+NumPy @code{.npy} binary serialization.
+@item
+@strong{Scientific Continuum (@code{hyper_math::scientific})}:
+Dense and sparse linear algebra, arbitrary-length FFT (Cooley-Tukey +
+Bluestein Chirp-Z), adaptive Gauss-Kronrod quadrature, Dormand-Prince
+RK4(5) ODE solver, unconstrained and constrained optimization (BFGS,
+L-BFGS-B, Nelder-Mead, Levenberg-Marquardt, Simplex LP), digital signal
+filtering (@code{firwin}, @code{butter_lowpass_ba}, @code{filtfilt},
+@code{welch}), spatial @math{k}-d trees, clustering, KDE, and PCA.
+@item
+@strong{Dual-Bitmask Columnar Engine (@code{hyper_math::tabular})}:
+64-bit word @code{validity_bitmap} using hardware @code{std::popcount},
+hash-indexed @code{index_axis}, @code{series} and @code{data_frame} with
+multi-column and @code{asof} joins, pivot, melt, crosstab, ISO-8601
+@code{.dt} accessors, and CSV / NDJSON / @code{.hmb} I/O.
+@item
+@strong{Lazy Relational Query Optimizer (@code{hyper_math::tabular::lazy_frame})}:
+Declarative expression AST (@code{col}, @code{lit}, @code{when}, @code{over})
+with algebraic constant folding, filter fusion, predicate pushdown, dead
+column elimination, and projection pushdown.
+@end itemize
+
+@node Tensor Engine
+@chapter Tensor Engine
+@cindex tensor engine
+@cindex nd_tensor
+
+Include @code{<hyper_math/hyper_math.hpp>} and use namespace
+@code{hyper_math::tensor}. Key facilities include:
+@itemize @bullet
+@item Creation: @code{zeros}, @code{ones}, @code{full}, @code{arange},
+@code{linspace}, @code{logspace}, @code{eye}, @code{diag}, @code{meshgrid}.
+@item Manipulation: @code{slice}, @code{transpose}, @code{reshape},
+@code{concatenate}, @code{stack}, @code{column_stack}, @code{split},
+@code{array_split}, @code{pad}, @code{roll}, @code{rot90}, @code{save_npy},
+@code{load_npy}.
+@item Contractions & Reductions: @code{matmul}, @code{dot}, @code{outer},
+@code{kron}, @code{tensordot}, @code{einsum}, @code{sum}, @code{mean},
+@code{var}, @code{std_dev}, @code{nansum}, @code{nanmean}, @code{nanstd}.
+@end itemize
+
+@node Scientific Continuum
+@chapter Scientific Continuum
+@cindex scientific continuum
+
+The @code{hyper_math::scientific} namespace provides eleven submodules:
+@code{linalg} (LU, LDL, QR, QZ, SVD, Schur, Sylvester/Lyapunov/Riccati,
+matrix functions), @code{fft} (1D/2D/N-D FFT, DCT, DST, Fast Hankel Transform),
+@code{integrate} (Gauss-Kronrod 1D/2D/3D/N-D quadrature, tanh-sinh, RK45/RK23/
+DOP853/Radau/BDF ODE solvers, BVP solver), @code{optimize} (BFGS, L-BFGS-B,
+CG, Newton-CG, Powell, Trust-Region Dogleg/NCG, SLSQP, Simplex LP, MILP, NNLS,
+Dual Annealing, Differential Evolution, Basin-Hopping, SHGO, DIRECT, QAP),
+@code{stats} (22 probability distributions, special functions, Quasi-Monte
+Carlo Halton/Sobol/LHS/Poisson-disk, bootstrap/permutation resampling, 25+
+hypothesis tests, KDE, PCA), @code{interpolate} (Cubic/Akima/PCHIP/B-Splines,
+RBF, 2D/3D rectilinear & Delaunay griddata), @code{signal} (FIR/Butterworth/
+Chebyshev/Elliptic/Bessel filters, SOS filtering, STFT/Welch/Lomb-Scargle/CZT,
+LTI state-space systems), @code{sparse} (CSR/CSC/COO/DIA/BSR/DOK/LIL matrices,
+CG/BiCGSTAB/GMRES/MINRES/LSQR/LU/ILU/ARPACK-style eigsh/svds, @code{csgraph}),
+@code{spatial} (k-d tree, 2D Delaunay/Voronoi/Spherical Voronoi/Halfspace/
+Polygon clipping, 3D @code{rotation} & @code{rigid_transform}), @code{cluster}
+(k-Means++, hierarchical linkage, DBSCAN, OPTICS), and @code{autograd}
+(forward-mode @code{dual_number} and reverse-mode Wengert computation
+@code{tape} / @code{var}).
+
+@node Tabular and Lazy Engine
+@chapter Tabular and Lazy Engine
+@cindex data_frame
+@cindex lazy_frame
+
+The @code{hyper_math::tabular} namespace unifies eager @code{series} /
+@code{data_frame} manipulation (including @code{.str} regex/encoding/JSON and
+@code{.dt} ISO-8601 temporal methods, dynamic temporal group-by, and
+CSV/NDJSON/JSON/HTML/Markdown/LaTeX/@code{.hmb} I/O) with lazy query
+optimization via @code{lazy_frame} and @code{sql_context}.
+
+Pure C / FFI bindings are provided in @code{<hyper_math/hyper_math_c.h>}, and
+the @code{hyper-math} command-line driver supports @code{--demo}, @code{--repl},
+@code{--csv}, @code{--ndjson}, and @code{--eval}.
+
+@node Index
+@unnumbered Index
+@printindex cp
+
+@bye

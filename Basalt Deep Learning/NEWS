@@ -1,0 +1,76 @@
+Basalt Deep Learning NEWS — history of user-visible changes.
+
+Copyright (C) 2026 Kival
+See the end of the file for license conditions.
+
+* Noteworthy changes in Basalt Deep Learning 0.1 (2026-10-31)
+
+** Initial release of Basalt Deep Learning (0.1.0), built upon the Bellows
+   machine-learning engine.
+
+** Core Tensor and Backend Engine:
+   - N-dimensional strided `basalt::Tensor` with zero-copy slicing,
+     transposition, permutation, reshaping, and multi-dimensional
+     broadcasting across `f16`, `bf16`, `f32`, `f64`, `i32`, `i64`, `u8`,
+     and `bool`.
+   - Zero-allocation power-of-2 caching slab pools for both CPU (`aligned_alloc`
+     via `hyper_math::slab_buffer`) and CUDA unified memory
+     (`cuMemAllocManaged`).
+   - CPU backend dispatching through Bellows / Hyper Math AVX2+FMA and OpenMP
+     8-P-core parallel kernels, plus runtime-loaded CUDA driver (`libcuda.so`),
+     cuBLAS (`libcublas.so`), and NVRTC JIT PTX kernels (`libnvrtc.so`).
+
+** Dynamic Reverse-Mode Autograd:
+   - Dynamic computational graph engine supporting higher-order derivatives
+     (`create_graph = true`), `No_Grad_Guard`, `Enable_Grad_Guard`, and
+     activation checkpointing.
+
+** Neural Network Modules, Optimizers, and Schedulers:
+   - Complete `basalt::nn` module library (`Linear`, `Conv1d`/`2d`/`3d` with
+     `im2col` + GEMM forward and backward kernels, `Conv_Transpose2d`,
+     pooling, `Batch_Norm`, fused single-pass `Layer_Norm` on CPU and CUDA,
+     `Group_Norm`, `Instance_Norm1d`/`2d`/`3d`, `RMS_Norm`, fused `gelu` and
+     `softmax` on CPU and CUDA, online-softmax FlashAttention
+     `Multihead_Attention`, `Transformer_Encoder`, `Transformer_Decoder`,
+     `RNN`, `LSTM`, `GRU`, `Rotary_Embedding` (`RoPE`), `KV_Cache`,
+     `Embedding`, `Dropout`).
+   - Optimizers (`SGD`, `Adam`, `AdamW`, `RMSprop`, `Adagrad`, `LAMB` with
+     fused NVRTC GPU and vectorized CPU updates), losses (`MSE_Loss`,
+     `L1_Loss`, `Smooth_L1_Loss`, `Huber_Loss`, `NLL_Loss`,
+     `Cross_Entropy_Loss`, `BCE_With_Logits_Loss`, `KL_Div_Loss`,
+     `Cosine_Embedding_Loss`), and schedulers (`Step_LR`, `Exponential_LR`,
+     `Multi_Step_LR`, `Cosine_Annealing_LR`, `One_Cycle_LR`,
+     `Linear_Warmup_LR`, `Reduce_LR_On_Plateau`).
+
+** Data Pipeline, Serialization, Trainer, C ABI, CLI, and Python:
+   - Deterministic, multi-threaded prefetching `Data_Loader` and POSIX
+     memory-mapped datasets.
+   - Versioned self-describing checkpoints, Safetensors import/export, and
+     ONNX import/export.
+   - Lightning-style `basalt::Trainer` with callbacks, early stopping,
+     checkpoint resume, pluggable loggers, and data-parallel training.
+   - Stable C ABI (`libbasalt-c`), CLI tools (`basalt-train`,
+     `basalt-inspect`, `basalt-convert`), and optional Python bindings.
+
+** Benchmark Results (`bench/bench_basalt` on Intel Core i7-12700K & RTX 3070):
+   - `matmul` (256x256 fp32, CPU AVX2+FMA)        :  0.111 ms/iter (303.380 GFLOP/s)
+   - `Conv2d` (4x8x16x16 -> 16, k=3, CPU)         :  0.088 ms/iter
+   - `MLP` (32x64->128->32 fwd+bwd, CPU)          :  0.205 ms/iter
+   - `Transformer_Encoder` (4x16x32, CPU)         :  0.341 ms/iter
+   - `CUDA matmul` (1024x1024 fp32, RTX 3070)     :  0.209 ms/iter (10261.162 GFLOP/s)
+   - `CUDA TensorCore` (2048x2048 fp16, RTX 3070) :  0.504 ms/iter (34109.968 GFLOP/s)
+
+----------------------------------------------------------------------
+Copyright information:
+
+Copyright (C) 2026 Kival
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.

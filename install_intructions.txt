@@ -1,0 +1,124 @@
+================================================================================
+SPHINX C++23 AI STACK — MASTER COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+This directory ($HOME/AI/Arkantos) contains the complete native C++23
+source stack required to build and run Sphinx.
+
+BUILD ORDER (Strict Dependency Order -> Install Prefix: ~/.local)
+-----------------------------------------------------------------
+  1. Hyper Math            (Layer 1: SIMD linear algebra & numerical primitives)
+  2. Bellows               (Layer 2: Concurrency, tensor & workflow utilities)
+  3. Basalt Deep Learning  (Layer 3: Deep learning primitives & autotools/CMake)
+  4. Obsidian              (Layer 4: NLP tokenization, embeddings & text engine)
+  5. Surya                 (Layer 5: Computer vision & image processing)
+  6. Darshana              (Layer 6: Native C++23 SVG & Vulkan visualization)
+  7. Yantra                (Layer 7: ModelRegistry, ExperimentStore, WAL, HNSW, DAGs)
+  8. Sutra                 (Layer 8: LlamaCppClient LLM runtime & ToolRegistry)
+  9. Vach                  (Layer 9: Lock-free ALSA AudioIo, VAD, Whisper STT, Piper TTS)
+ 10. Sphinx                (Layer 10: Voice + Text AI assistant library & CLI)
+ 11. Stack Test            (Optional: Cross-library integration verification)
+
+================================================================================
+0. SYSTEM PREREQUISITES
+================================================================================
+
+Ensure the following system packages and external engines are present:
+  - GCC 14+ (C++23) and g++-13 (for CUDA nvcc host compilation)
+  - CMake >= 3.28, Ninja, GNU Make, Autoconf, Automake, Libtool, pkg-config
+  - CUDA Toolkit 12.x (nvcc, cublas, cudart)
+  - ALSA development headers (libasound2-dev)
+  - Vulkan development headers (libvulkan-dev) for Darshana GPU backend
+  - Image libraries for Surya (libjpeg-dev, libpng-dev, libwebp-dev, libtiff-dev, zlib1g-dev)
+  - llama.cpp built as a shared library at $HOME/llama.cpp/build/bin/libllama.so
+  - whisper.cpp built at $HOME/.local/lib (libwhisper.so) and models in $HOME/models/
+
+Ensure ~/.local/bin is on PATH and ~/.local/lib is on LD_LIBRARY_PATH:
+  export PATH="$HOME/.local/bin:$PATH"
+  export LD_LIBRARY_PATH="$HOME/.local/lib:$HOME/llama.cpp/build/bin:$LD_LIBRARY_PATH"
+
+================================================================================
+1. ONE-SHOT BUILD & INSTALL OF THE ENTIRE STACK
+================================================================================
+
+Run the following commands from $HOME/AI/Arkantos:
+
+  # 1. Hyper Math
+  cd "$HOME/AI/Arkantos/Hyper Math"
+  cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+  cmake --build build -j$(nproc)
+  cmake --install build --prefix "$HOME/.local"
+  mkdir -p lib && cp -a build/libhypermath* lib/
+
+  # 2. Bellows
+  cd "$HOME/AI/Arkantos/Bellows"
+  cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
+        -DHYPER_MATH_DIR="$HOME/AI/Arkantos/Hyper Math"
+  cmake --build build -j$(nproc)
+  cmake --install build --prefix "$HOME/.local"
+  mkdir -p lib && cp -a build/libbellows* lib/
+
+  # 3. Basalt Deep Learning
+  cd "$HOME/AI/Arkantos/Basalt Deep Learning"
+  ./configure --prefix="$HOME/.local"
+  make -j$(nproc)
+  make install
+
+  # 4. Obsidian
+  cd "$HOME/AI/Arkantos/Obsidian"
+  ./configure --prefix="$HOME/.local"
+  make -j$(nproc)
+  make install
+
+  # 5. Surya
+  cd "$HOME/AI/Arkantos/Surya"
+  cmake --preset release \
+    -DBELLOWS_ROOT="$HOME/AI/Arkantos/Bellows" \
+    -DHYPER_MATH_ROOT="$HOME/AI/Arkantos/Hyper Math" \
+    -DBASALT_ROOT="$HOME/AI/Arkantos/Basalt Deep Learning" \
+    -DOBSIDIAN_ROOT="$HOME/AI/Arkantos/Obsidian"
+  cmake --build build-release -j$(nproc)
+  cmake --install build-release --prefix "$HOME/.local"
+
+  # 6. Darshana
+  cd "$HOME/AI/Arkantos/Darshana"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+  cmake --install build-release --prefix "$HOME/.local"
+
+  # 7. Yantra
+  cd "$HOME/AI/Arkantos/Yantra"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+  cmake --install build-release --prefix "$HOME/.local"
+
+  # 8. Sutra
+  cd "$HOME/AI/Arkantos/Sutra"
+  cmake --preset release -DSUTRA_LLAMACPP_ROOT="$HOME/llama.cpp"
+  cmake --build build-release -j$(nproc)
+  cmake --install build-release --prefix "$HOME/.local"
+
+  # 9. Vach
+  cd "$HOME/AI/Arkantos/Vach"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+  cmake --install build-release --prefix "$HOME/.local"
+
+  # 10. Sphinx
+  cd "$HOME/AI/Arkantos/Sphinx"
+  cmake --preset release
+  cmake --build build/release -j$(nproc)
+  cmake --install build/release --prefix "$HOME/.local"
+
+================================================================================
+2. RUNNING SPHINX
+================================================================================
+
+  # Live Voice + Text Mode (ALSA microphone + Piper TTS + typed input):
+  ~/.local/bin/sphinx
+
+  # Text-Only Interactive Mode (no microphone / speaker required):
+  ~/.local/bin/sphinx --text --headless
+
+  # Single-Shot Prompt Mode:
+  ~/.local/bin/sphinx --prompt "What operating system am I running?" --headless

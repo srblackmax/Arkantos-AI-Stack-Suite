@@ -1,0 +1,12 @@
+# Suppress false positives from uninstrumented Vulkan loader and GPU drivers under TSan
+called_from_lib:libvulkan.so
+called_from_lib:libGLX_nvidia.so
+called_from_lib:libnvidia-glcore.so
+called_from_lib:libnvidia-tls.so
+called_from_lib:libcuda.so
+called_from_lib:libdrm.so
+called_from_lib:libvulkan_intel.so
+called_from_lib:libvulkan_lvp.so
+mutex:VulkanHardwareEngine
+mutex:libvulkan.so
+

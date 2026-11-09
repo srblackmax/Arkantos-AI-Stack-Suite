@@ -1,0 +1,61 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6, Driver 550.163.01)",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T18:52:20Z",
+  "metrics": [
+    {
+      "name": "bpe_arena_encode_5k_p50_ms",
+      "value": 6.3417,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-bpe-arena-encode",
+      "sanity_check": { "passed": true, "details": "tokens=125000" }
+    },
+    {
+      "name": "bpe_arena_encode_tokens_per_s",
+      "value": 19710930.5310,
+      "unit": "tokens/s (vocab_size=96, 68B string)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-bpe-arena-encode",
+      "sanity_check": { "passed": true, "details": "decoded=high performance" }
+    },
+    {
+      "name": "mmap_lookup_100k_p50_ms",
+      "value": 0.6684,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-mmap-zero-copy-lookup",
+      "sanity_check": { "passed": true, "details": "checksum=50000.000000" }
+    },
+    {
+      "name": "fused_qkv_gqa_4x32x64_p50_ms",
+      "value": 0.8820,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3-fused-qkv-gqa-forward",
+      "sanity_check": { "passed": true, "details": "y[0]=0.515988" }
+    },
+    {
+      "name": "rss_bare_process_mb",
+      "value": 4.2070,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Bare process VmRSS at main() entry" }
+    },
+    {
+      "name": "rss_post_library_load_mb",
+      "value": 4.6133,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-BPE-init VmRSS" }
+    },
+    {
+      "name": "rss_peak_workload_mb",
+      "value": 247.1758,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Peak VmHWM after GQA attention forward passes" }
+    }
+  ]
+}

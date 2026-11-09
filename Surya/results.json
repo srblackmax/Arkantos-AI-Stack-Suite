@@ -1,0 +1,222 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6, Driver 550.163.01, CUDA 12.4)",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T19:09:47Z",
+  "metrics": [
+    {
+      "name": "simd_scale_bias_1080p_p50_us",
+      "value": 200.4139,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "GPix/s=10.346588" }
+    },
+    {
+      "name": "imgproc_rgb_to_gray_720p_p50_us",
+      "value": 78.3075,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=1280" }
+    },
+    {
+      "name": "imgproc_gaussian_blur_720p_p50_us",
+      "value": 438.6352,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "center_px=120" }
+    },
+    {
+      "name": "imgproc_resize_720p_to_640_p50_us",
+      "value": 325.4203,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=640" }
+    },
+    {
+      "name": "imgproc_erode_5x5_720p_p50_us",
+      "value": 1929.3425,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "erode_px=120" }
+    },
+    {
+      "name": "io_decode_qoi_640x480_p50_us",
+      "value": 115.8886,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=640" }
+    },
+    {
+      "name": "io_decode_jpeg_640x480_p50_us",
+      "value": 239.5978,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=640" }
+    },
+    {
+      "name": "augment_pipeline_5stage_640_p50_us",
+      "value": 833.9615,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=640" }
+    },
+    {
+      "name": "nn_image_to_tensor_nchw_640_p50_us",
+      "value": 243.1037,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "numel=1228800" }
+    },
+    {
+      "name": "nn_conv_bn_act_unfused_p50_us",
+      "value": 761.8892,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "numel=65536" }
+    },
+    {
+      "name": "nn_conv_bn_act_fused_p50_us",
+      "value": 214.1874,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "numel=65536" }
+    },
+    {
+      "name": "detection_letterbox_720p_p50_us",
+      "value": 235.9111,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "width=640" }
+    },
+    {
+      "name": "detection_batched_nms_1000_p50_us",
+      "value": 525.2653,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "kept=540" }
+    },
+    {
+      "name": "detection_byte_tracker_25_p50_us",
+      "value": 22.4899,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "tracks=25" }
+    },
+    {
+      "name": "classical_fast9_640x480_p50_us",
+      "value": 1253.7876,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "keypoints=234" }
+    },
+    {
+      "name": "classical_hog_64x128_p50_us",
+      "value": 52.7065,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "dims=3780" }
+    },
+    {
+      "name": "classical_ransac_homography_p50_us",
+      "value": 11.5388,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-subsystem-microbenchmarks",
+      "sanity_check": { "passed": true, "details": "homography converged" }
+    },
+    {
+      "name": "surya_cpu_pipeline_b1_p50_us",
+      "value": 5253.2510,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-vlm-latency",
+      "sanity_check": { "passed": true, "details": "24-layer CPU fallback" }
+    },
+    {
+      "name": "surya_gpu_b1_no_graph_p50_us",
+      "value": 394.0183,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-vlm-latency",
+      "sanity_check": { "passed": true, "details": "CUDA no graph" }
+    },
+    {
+      "name": "surya_gpu_b1_cuda_graph_p50_us",
+      "value": 348.5910,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-vlm-latency",
+      "sanity_check": { "passed": true, "details": "CUDA Graph replay" }
+    },
+    {
+      "name": "surya_gpu_batch_1_p50_us",
+      "value": 356.0643,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "batch=1" }
+    },
+    {
+      "name": "surya_gpu_batch_4_p50_us",
+      "value": 998.0637,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "batch=4" }
+    },
+    {
+      "name": "surya_gpu_batch_8_p50_us",
+      "value": 1761.3507,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "batch=8" }
+    },
+    {
+      "name": "surya_gpu_batch_16_p50_us",
+      "value": 3279.0550,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "batch=16" }
+    },
+    {
+      "name": "surya_gpu_batch_32_p50_us",
+      "value": 6460.7407,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "batch=32" }
+    },
+    {
+      "name": "surya_gpu_overlapped_128_p50_us",
+      "value": 24036.2180,
+      "unit": "us",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-batched-vlm",
+      "sanity_check": { "passed": true, "details": "128 images overlapped" }
+    },
+    {
+      "name": "surya_vram_steady_mib",
+      "value": 2090.8870,
+      "unit": "MiB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3-vram-residency",
+      "sanity_check": { "passed": true, "details": "peak_mib=3690.886963" }
+    },
+    {
+      "name": "rss_bare_process_mb",
+      "value": 8.4141,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-host-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Bare process VmRSS at main() entry" }
+    },
+    {
+      "name": "rss_post_library_load_mb",
+      "value": 20.2148,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-host-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-CPU-image-pool VmRSS" }
+    },
+    {
+      "name": "rss_post_gpu_init_mb",
+      "value": 1827.1797,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-host-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-SuryaPipeline-GPU-init + 1s idle VmRSS" }
+    }
+  ]
+}

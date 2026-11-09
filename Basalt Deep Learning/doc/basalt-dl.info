@@ -1,0 +1,1017 @@
+This is basalt-dl.info, produced by makeinfo version 7.1.1 from
+basalt-dl.texi.
+
+This manual is for Basalt Deep Learning (version 0.1.0), a
+production-grade C++20 deep-learning library built on the Bellows
+machine-learning engine.
+
+   Copyright © 2026 Kival.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU General Public License, Version
+     3 or any later version published by the Free Software Foundation.
+INFO-DIR-SECTION Software libraries
+START-INFO-DIR-ENTRY
+* Basalt Deep Learning: (basalt-dl).   C++20 deep-learning framework.
+END-INFO-DIR-ENTRY
+
+
+File: basalt-dl.info,  Node: Top,  Next: Overview,  Up: (dir)
+
+Basalt Deep Learning Reference Manual
+*************************************
+
+This manual is for Basalt Deep Learning (version 0.1.0), a
+production-grade C++20 deep-learning library built on the Bellows
+machine-learning engine.
+
+   Copyright © 2026 Kival.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU General Public License, Version
+     3 or any later version published by the Free Software Foundation.
+
+* Menu:
+
+* Overview::               Introduction, license, and Bellows relationship.
+* Tutorial::               Quick-start guide for C++, C, CLI, and Python.
+* Internals::              Engine architecture, Bellows bridge, and autograd.
+* Core API::               Version, errors, dtypes, devices, and RNG.
+* Tensors and Operations:: N-dimensional strided tensors and math operations.
+* Autograd Engine::        Dynamic reverse-mode and higher-order gradients.
+* Neural Network Layers::  Modules, layers, attention, and initializers.
+* Optimization and Losses:: Losses, Bellows metrics, optimizers, schedulers.
+* Training and IO::        Data pipeline, AMP, checkpoints, ONNX, and Trainer.
+* C API and CLI Tools::    Stable C ABI (libbasalt-c) and command-line tools.
+* Type Index::             Index of all public classes, structs, and enums.
+* Function Index::         Index of all public functions and methods.
+
+
+File: basalt-dl.info,  Node: Overview,  Next: Tutorial,  Prev: Top,  Up: Top
+
+1 Overview
+**********
+
+Basalt Deep Learning is a portable C++20 deep-learning framework
+licensed under the GNU General Public License version 3 or later
+(GPLv3+).  It is built on top of the _Bellows_ C++ machine-learning
+library and its transitive _Hyper Math_ scientific computing engine.
+
+   Basalt Deep Learning adheres strictly to the GNU Coding Standards as
+an engineering, formatting, build-system, and documentation discipline.
+It is an independent project and is *not* part of, endorsed by, or
+affiliated with the GNU Project.
+
+1.1 Key Capabilities
+====================
+
+   • Multi-dtype N-dimensional strided ‘basalt::Tensor’ with zero-copy
+     views and NumPy/PyTorch-compatible broadcasting over Bellows
+     ‘slab_buffer’ arenas.
+   • Dynamic reverse-mode automatic differentiation with higher-order
+     derivatives (‘create_graph = true’), ‘No_Grad_Guard’,
+     ‘Enable_Grad_Guard’, activation ‘checkpoint’, and finite-difference
+     ‘gradcheck’.
+   • Comprehensive ‘basalt::nn’ module library including ‘Linear’,
+     ‘Conv1d’/‘2d’/‘3d’, pooling, ‘Batch_Norm’, ‘Layer_Norm’,
+     ‘Group_Norm’, ‘RMS_Norm’, ‘Multihead_Attention’,
+     ‘Transformer_Encoder’, and ‘Transformer_Decoder’.
+   • First-order and adaptive optimizers (‘SGD’, ‘Adam’, ‘AdamW’,
+     ‘RMSprop’, ‘Adagrad’, ‘LAMB’) and learning-rate schedulers
+     (‘Step_LR’, ‘Cosine_Annealing_LR’, ‘One_Cycle_LR’,
+     ‘Linear_Warmup_LR’, ‘Reduce_LR_On_Plateau’).
+   • Versioned FNV-1a checksummed checkpoints (‘.bckpt’), Hugging Face
+     Safetensors (‘.safetensors’), and ONNX (‘.onnx’) import/export.
+   • Lightning-style ‘basalt::Trainer’, mixed precision (‘Float16’ and
+     ‘BFloat16’), multi-device ‘Data_Parallel’, a stable C ABI
+     (‘libbasalt-c’), CLI utilities (‘basalt-train’, ‘basalt-inspect’,
+     ‘basalt-convert’), and optional ‘pybind11’ Python bindings (‘import
+     basalt’).
+
+
+File: basalt-dl.info,  Node: Tutorial,  Next: Internals,  Prev: Overview,  Up: Top
+
+2 Tutorial
+**********
+
+2.1 Building and Installing
+===========================
+
+Basalt Deep Learning uses the standard GNU Autotools workflow:
+
+     ./configure --prefix=/usr/local
+     make -j4
+     make check
+     make install
+
+2.2 Training a Model in C++20
+=============================
+
+Include ‘<basalt/basalt.hpp>’, subclass ‘basalt::Trainable_Module’, and
+pass a ‘basalt::data::Data_Loader’ to ‘basalt::Trainer::fit’:
+
+     #include <basalt/basalt.hpp>
+
+     int
+     main (void)
+     {
+       basalt::seed_everything (42);
+       basalt::Tensor x = basalt::randn ({32, 4});
+       basalt::Tensor w = basalt::randn ({4, 1}).set_requires_grad (true);
+       basalt::Tensor y = basalt::ops::matmul (x, w);
+       basalt::Tensor loss = basalt::ops::mean (basalt::ops::square (y));
+       loss.backward ();
+       return 0;
+     }
+
+
+File: basalt-dl.info,  Node: Internals,  Next: Core API,  Prev: Tutorial,  Up: Top
+
+3 Internals
+***********
+
+3.1 Bellows Engine Integration
+==============================
+
+Basalt Deep Learning never duplicates functionality already provided by
+Bellows or Hyper Math:
+   • CPU memory allocations are backed by 64-byte aligned
+     ‘hyper_math::slab_buffer<uint8_t>’ inside
+     ‘basalt::bellows_compat::Bellows_Storage’.
+   • Parallel tensor kernels, batched GEMM, convolutions, and
+     data-loader workers execute on ‘hyper_math::parallel_for’ and
+     ‘hyper_math::thread_pool’.
+   • Random number generation wraps ‘hyper_math::random_engine’ (PCG64).
+   • Orthogonal weight initialization delegates to
+     ‘hyper_math::scientific::linalg::qr’.
+   • Tabular dataset normalization delegates to
+     ‘bellows::moment_normaliser’, evaluation metrics delegate to
+     ‘bellows::evaluation’, and checkpoint integrity uses
+     ‘bellows::compute_fnv1a_checksum’.
+
+3.2 Dynamic Reverse-Mode Autograd
+=================================
+
+Every differentiable operation constructs an ‘Autograd_Node’ on the
+dynamic computation graph when ‘Grad_Mode::is_enabled ()’ is true and
+any operand has ‘requires_grad () == true’.  Calling ‘backward ()’
+performs a topological sort from the root outputs, accumulates gradients
+into leaf ‘Autograd_Meta’ slots, and verifies ‘Saved_Variable’ version
+counters to catch illegal in-place mutations.
+
+
+File: basalt-dl.info,  Node: Core API,  Next: Tensors and Operations,  Prev: Internals,  Up: Top
+
+4 Core API
+**********
+
+ -- C Function: const char * basalt_version_string (void)
+     Return the null-terminated version string derived from ‘AC_INIT’ in
+     ‘configure.ac’.
+
+ -- C Function: int basalt_version_major (void)
+     Return the major version component (‘BASALT_VERSION_MAJOR’).
+
+ -- C Function: int basalt_version_minor (void)
+     Return the minor version component (‘BASALT_VERSION_MINOR’).
+
+ -- C Function: int basalt_version_patch (void)
+     Return the patch version component (‘BASALT_VERSION_PATCH’).
+
+ -- Class: basalt::Basalt_Error
+     Base exception class inheriting from ‘std::runtime_error’.
+     Subclasses include ‘Invalid_Argument_Error’, ‘Shape_Error’,
+     ‘Dtype_Error’, ‘Device_Error’, ‘IO_Error’, and ‘Autograd_Error’.
+
+ -- Function: void basalt::report_diagnostic (const char *FILE, const
+          std::string &MESSAGE)
+     Write ‘basalt: FILE: MESSAGE’ to ‘stderr’.
+     ‘report_tool_diagnostic’ writes ‘PROGRAM_NAME: MESSAGE’ to
+     ‘stderr’.
+
+ -- Enum: basalt::Dtype
+     Scalar data types: ‘Dtype::Float32’, ‘Dtype::Float64’,
+     ‘Dtype::Float16’, ‘Dtype::BFloat16’, ‘Dtype::Int32’,
+     ‘Dtype::Int64’, ‘Dtype::UInt8’, and ‘Dtype::Bool’.
+
+ -- Function: size_t basalt::dtype_size (Dtype DTYPE)
+     Return the byte width of DTYPE.  Companion helpers ‘dtype_name’,
+     ‘dtype_from_name’, ‘is_floating_point’, ‘is_integral’,
+     ‘promote_dtypes’, and ‘dtype_of<T>’ query and promote scalar types.
+
+ -- Class: basalt::Device
+     Represents a compute device (‘Device::cpu ()’ or ‘Device::cuda
+     (index)’).
+
+ -- Function: bool basalt::cuda_is_available (void)
+     Query runtime CUDA availability, device counts, and synchronize a
+     device.
+
+ -- Class: basalt::Random_Generator
+     Deterministic PCG64 random number generator wrapping
+     ‘hyper_math::random_engine’.
+
+ -- Function: void basalt::seed_everything (uint64_t SEED)
+     Seed all thread-local and default deterministic random generators.
+
+
+File: basalt-dl.info,  Node: Tensors and Operations,  Next: Autograd Engine,  Prev: Core API,  Up: Top
+
+5 Tensors and Operations
+************************
+
+ -- Struct: basalt::Tensor_Options
+     Configuration struct holding ‘dtype’, ‘device’, and ‘requires_grad’
+     for tensor creation.
+
+ -- Class: basalt::Tensor
+     Multi-dtype N-dimensional strided tensor handle backed by
+     ‘Bellows_Storage’.  Provides zero-copy view methods (‘view’,
+     ‘reshape’, ‘transpose’, ‘t’, ‘permute’, ‘slice’, ‘narrow’,
+     ‘select’, ‘squeeze’, ‘unsqueeze’, ‘expand’, ‘broadcast_to’,
+     ‘flatten’), device/dtype transfer (‘to’, ‘cpu’, ‘cuda’,
+     ‘contiguous’, ‘clone’, ‘detach’), in-place mutations (‘fill_’,
+     ‘zero_’, ‘copy_’, ‘add_’, ‘mul_’), and autograd methods
+     (‘backward’, ‘grad’, ‘set_requires_grad’, ‘retain_grad’,
+     ‘zero_grad’).
+
+ -- Function: basalt::Tensor basalt::zeros (const Shape_Vector &SHAPE,
+          Tensor_Options OPTIONS)
+     Factory functions constructing tensors on CPU or CUDA and bridging
+     to and from ‘bellows::data_table’.
+
+ -- Function: basalt::Tensor basalt::ops::matmul (const Tensor &A, const
+          Tensor &B)
+     Differentiable mathematical, reduction, linear-algebra, and
+     indexing operations in ‘basalt::ops’.
+
+
+File: basalt-dl.info,  Node: Autograd Engine,  Next: Neural Network Layers,  Prev: Tensors and Operations,  Up: Top
+
+6 Autograd Engine
+*****************
+
+ -- Class: basalt::Autograd_Node
+     Reverse-mode computation graph node, edge, version-checked saved
+     variable, and RAII gradient scope guards (‘No_Grad_Guard’,
+     ‘Enable_Grad_Guard’).
+
+ -- Function: void basalt::backward (const std::vector<Tensor> &OUTPUTS,
+          const std::vector<Tensor> &GRAD_OUTPUTS, bool RETAIN_GRAPH,
+          bool CREATE_GRAPH)
+     Execute reverse-mode automatic differentiation, compute
+     higher-order gradients (‘grad’), recompute activations during
+     backward (‘checkpoint’), and verify analytical gradients against
+     central finite differences (‘gradcheck’, ‘gradgradcheck’).
+
+
+File: basalt-dl.info,  Node: Neural Network Layers,  Next: Optimization and Losses,  Prev: Autograd Engine,  Up: Top
+
+7 Neural Network Layers
+***********************
+
+ -- Function: basalt::Tensor basalt::F::scaled_dot_product_attention
+          (const Tensor &QUERY, const Tensor &KEY, const Tensor &VALUE,
+          const Tensor &ATTN_MASK, double DROPOUT_P, bool IS_CAUSAL)
+     Stateless functional neural network operations in ‘basalt::F’.
+
+ -- Function: basalt::Tensor & basalt::nn::init::kaiming_uniform_
+          (Tensor &TENSOR, double A, bool FAN_IN_MODE)
+     In-place parameter initialization routines in ‘basalt::nn::init’.
+
+ -- Class: basalt::nn::Module
+     Stateful neural network modules and containers in ‘basalt::nn’.
+
+
+File: basalt-dl.info,  Node: Optimization and Losses,  Next: Training and IO,  Prev: Neural Network Layers,  Up: Top
+
+8 Optimization and Losses
+*************************
+
+ -- Enum: basalt::loss::Reduction
+     Loss reduction modes (‘Reduction::None’, ‘Reduction::Mean’,
+     ‘Reduction::Sum’) and loss module classes in ‘basalt::loss’.
+
+ -- Function: basalt::Tensor basalt::loss::cross_entropy_loss (const
+          Tensor &LOGITS, const Tensor &TARGET, Reduction REDUCTION,
+          int64_t IGNORE_INDEX, double LABEL_SMOOTHING)
+     Numerically stable loss functions in ‘basalt::loss’.
+
+ -- Function: double basalt::metrics::accuracy (const Tensor
+          &PREDS_OR_LOGITS, const Tensor &TARGETS)
+     Evaluation metrics in ‘basalt::metrics’ backed by ‘bellows’.
+
+ -- Class: basalt::optim::Optimizer
+     Optimization algorithms and learning-rate schedulers in
+     ‘basalt::optim’.
+
+ -- Function: double basalt::optim::clip_grad_norm_ (const
+          std::vector<Tensor> &PARAMETERS, double MAX_NORM, double
+          NORM_TYPE)
+     In-place gradient norm and value clipping utilities.
+
+
+File: basalt-dl.info,  Node: Training and IO,  Next: C API and CLI Tools,  Prev: Optimization and Losses,  Up: Top
+
+9 Training and IO
+*****************
+
+ -- Class: basalt::data::Data_Loader
+     Datasets, transforms, collate functions, POSIX ‘mmap’ binary
+     reader, and deterministic multi-threaded prefetching ‘Data_Loader’.
+
+ -- Class: basalt::amp::Grad_Scaler
+     Automatic mixed-precision (‘Float16’/‘BFloat16’) scope guards and
+     dynamic gradient loss scaler.
+
+ -- Function: void basalt::io::save_checkpoint (const std::string &PATH,
+          const Checkpoint &CKPT)
+     Serialization functions for native checkpoints (‘.bckpt’), Hugging
+     Face Safetensors (‘.safetensors’), and ONNX (‘.onnx’) models.
+
+ -- Class: basalt::distributed::Data_Parallel
+     Multi-device data-parallel wrapper executing model replicas in
+     parallel and synchronizing gradients across devices.
+
+ -- Class: basalt::Trainer
+     Lightning-style training loop orchestrator supporting callbacks,
+     pluggable loggers, early stopping, checkpoint resume, mixed
+     precision, gradient accumulation, and multi-device ‘Data_Parallel’
+     training.
+
+
+File: basalt-dl.info,  Node: C API and CLI Tools,  Next: Type Index,  Prev: Training and IO,  Up: Top
+
+10 C API and CLI Tools
+**********************
+
+10.1 Stable C ABI (‘libbasalt-c’)
+=================================
+
+ -- C Function: const char * basalt_last_error (void)
+     C ABI functions declared in ‘<basalt/basalt_c.h>’ and exported by
+     ‘libbasalt-c’.
+
+10.2 Command-Line Tools
+=======================
+
+   • ‘basalt-train’: Train a model from the command line with support
+     for ‘--epochs’, ‘--batch-size’, ‘--lr’, ‘--seed’, ‘--output’,
+     ‘--resume’, ‘--amp’, ‘--dry-run’, ‘--verbose’, ‘--quiet’, ‘--help’,
+     and ‘--version’.
+   • ‘basalt-inspect’: Inspect any ‘.bckpt’, ‘.safetensors’, or ‘.onnx’
+     artifact.
+   • ‘basalt-convert’: Convert model weights between ‘.bckpt’,
+     ‘.safetensors’, and ‘.onnx’.
+
+
+File: basalt-dl.info,  Node: Type Index,  Next: Function Index,  Prev: C API and CLI Tools,  Up: Top
+
+Type Index
+**********
+
+ [index ]
+* Menu:
+
+* Adagrad:                               Optimization and Losses.
+                                                               (line 20)
+* Adam:                                  Optimization and Losses.
+                                                               (line 20)
+* AdamW:                                 Optimization and Losses.
+                                                               (line 20)
+* Adaptive_Avg_Pool2d:                   Neural Network Layers.
+                                                               (line 16)
+* Autocast_Guard:                        Training and IO.      (line 11)
+* Autocast_Mode:                         Training and IO.      (line 11)
+* Autograd_Error:                        Core API.             (line 20)
+* Autograd_Meta:                         Autograd Engine.      (line  7)
+* Autograd_Node:                         Autograd Engine.      (line  7)
+* Avg_Pool1d:                            Neural Network Layers.
+                                                               (line 16)
+* Avg_Pool2d:                            Neural Network Layers.
+                                                               (line 16)
+* Avg_Pool3d:                            Neural Network Layers.
+                                                               (line 16)
+* basalt_device_type_t:                  C API and CLI Tools.  (line 10)
+* basalt_dtype_t:                        C API and CLI Tools.  (line 10)
+* Basalt_Error:                          Core API.             (line 20)
+* basalt_mlp_t:                          C API and CLI Tools.  (line 10)
+* basalt_status_t:                       C API and CLI Tools.  (line 10)
+* basalt_tensor_t:                       C API and CLI Tools.  (line 10)
+* basalt::amp::Grad_Scaler:              Training and IO.      (line 10)
+* basalt::Autograd_Node:                 Autograd Engine.      (line  6)
+* basalt::Basalt_Error:                  Core API.             (line 19)
+* basalt::data::Data_Loader:             Training and IO.      (line  6)
+* basalt::Device:                        Core API.             (line 40)
+* basalt::distributed::Data_Parallel:    Training and IO.      (line 19)
+* basalt::Dtype:                         Core API.             (line 30)
+* basalt::loss::Reduction:               Optimization and Losses.
+                                                               (line  6)
+* basalt::nn::Module:                    Neural Network Layers.
+                                                               (line 15)
+* basalt::optim::Optimizer:              Optimization and Losses.
+                                                               (line 19)
+* basalt::Random_Generator:              Core API.             (line 48)
+* basalt::Tensor:                        Tensors and Operations.
+                                                               (line 10)
+* basalt::Tensor_Options:                Tensors and Operations.
+                                                               (line  6)
+* basalt::Trainer:                       Training and IO.      (line 23)
+* Batch:                                 Training and IO.      (line  7)
+* Batch_Norm:                            Neural Network Layers.
+                                                               (line 16)
+* Batch_Norm1d:                          Neural Network Layers.
+                                                               (line 16)
+* Batch_Norm2d:                          Neural Network Layers.
+                                                               (line 16)
+* Batch_Norm3d:                          Neural Network Layers.
+                                                               (line 16)
+* BCE_With_Logits_Loss:                  Optimization and Losses.
+                                                               (line  7)
+* BFloat16:                              Core API.             (line 31)
+* Callback:                              Training and IO.      (line 24)
+* Checkpoint:                            Training and IO.      (line 16)
+* Compose_Transform:                     Training and IO.      (line  7)
+* Console_Logger:                        Training and IO.      (line 24)
+* Conv_Transpose2d:                      Neural Network Layers.
+                                                               (line 16)
+* Conv1d:                                Neural Network Layers.
+                                                               (line 16)
+* Conv2d:                                Neural Network Layers.
+                                                               (line 16)
+* Conv3d:                                Neural Network Layers.
+                                                               (line 16)
+* Cosine_Annealing_LR:                   Optimization and Losses.
+                                                               (line 20)
+* Cosine_Embedding_Loss:                 Optimization and Losses.
+                                                               (line  7)
+* Cross_Entropy_Loss:                    Optimization and Losses.
+                                                               (line  7)
+* CSV_Logger:                            Training and IO.      (line 24)
+* Data_Loader:                           Training and IO.      (line  7)
+* Data_Parallel:                         Training and IO.      (line 20)
+* Dataset:                               Training and IO.      (line  7)
+* Device:                                Core API.             (line 41)
+* Device_Error:                          Core API.             (line 20)
+* Device_Type:                           Core API.             (line 41)
+* Dropout:                               Neural Network Layers.
+                                                               (line 16)
+* Dtype:                                 Core API.             (line 31)
+* Dtype_Error:                           Core API.             (line 20)
+* Early_Stopping:                        Training and IO.      (line 24)
+* Edge:                                  Autograd Engine.      (line  7)
+* ELU:                                   Neural Network Layers.
+                                                               (line 16)
+* Embedding:                             Neural Network Layers.
+                                                               (line 16)
+* Enable_Grad_Guard:                     Autograd Engine.      (line  7)
+* Exponential_LR:                        Optimization and Losses.
+                                                               (line 20)
+* Flatten:                               Neural Network Layers.
+                                                               (line 16)
+* Float16:                               Core API.             (line 31)
+* GELU:                                  Neural Network Layers.
+                                                               (line 16)
+* Grad_Mode:                             Autograd Engine.      (line  7)
+* Grad_Scaler:                           Training and IO.      (line 11)
+* Group_Norm:                            Neural Network Layers.
+                                                               (line 16)
+* GRU:                                   Neural Network Layers.
+                                                               (line 16)
+* Huber_Loss:                            Optimization and Losses.
+                                                               (line  7)
+* Identity:                              Neural Network Layers.
+                                                               (line 16)
+* Instance_Norm:                         Neural Network Layers.
+                                                               (line 16)
+* Instance_Norm1d:                       Neural Network Layers.
+                                                               (line 16)
+* Instance_Norm2d:                       Neural Network Layers.
+                                                               (line 16)
+* Instance_Norm3d:                       Neural Network Layers.
+                                                               (line 16)
+* Invalid_Argument_Error:                Core API.             (line 20)
+* IO_Error:                              Core API.             (line 20)
+* JSON_Lines_Logger:                     Training and IO.      (line 24)
+* KL_Div_Loss:                           Optimization and Losses.
+                                                               (line  7)
+* KV_Cache:                              Neural Network Layers.
+                                                               (line 16)
+* L1_Loss:                               Optimization and Losses.
+                                                               (line  7)
+* LAMB:                                  Optimization and Losses.
+                                                               (line 20)
+* Layer_Norm:                            Neural Network Layers.
+                                                               (line 16)
+* Leaky_ReLU:                            Neural Network Layers.
+                                                               (line 16)
+* Linear:                                Neural Network Layers.
+                                                               (line 16)
+* Linear_Warmup_LR:                      Optimization and Losses.
+                                                               (line 20)
+* Log_Softmax:                           Neural Network Layers.
+                                                               (line 16)
+* Logger:                                Training and IO.      (line 24)
+* LR_Monitor:                            Training and IO.      (line 24)
+* LR_Scheduler:                          Optimization and Losses.
+                                                               (line 20)
+* LSTM:                                  Neural Network Layers.
+                                                               (line 16)
+* Max_Pool1d:                            Neural Network Layers.
+                                                               (line 16)
+* Max_Pool2d:                            Neural Network Layers.
+                                                               (line 16)
+* Max_Pool3d:                            Neural Network Layers.
+                                                               (line 16)
+* Memory_Logger:                         Training and IO.      (line 24)
+* Metric_Tracker:                        Optimization and Losses.
+                                                               (line 17)
+* Mish:                                  Neural Network Layers.
+                                                               (line 16)
+* Mmap_Dataset:                          Training and IO.      (line  7)
+* Model_Checkpoint:                      Training and IO.      (line 24)
+* Module:                                Neural Network Layers.
+                                                               (line 16)
+* Module_Dict:                           Neural Network Layers.
+                                                               (line 16)
+* Module_List:                           Neural Network Layers.
+                                                               (line 16)
+* MSE_Loss:                              Optimization and Losses.
+                                                               (line  7)
+* Multi_Step_LR:                         Optimization and Losses.
+                                                               (line 20)
+* Multihead_Attention:                   Neural Network Layers.
+                                                               (line 16)
+* NLL_Loss:                              Optimization and Losses.
+                                                               (line  7)
+* No_Grad_Guard:                         Autograd Engine.      (line  7)
+* Normalize_Transform:                   Training and IO.      (line  7)
+* One_Cycle_LR:                          Optimization and Losses.
+                                                               (line 20)
+* Optimizer:                             Optimization and Losses.
+                                                               (line 20)
+* Optimizer_Configuration:               Training and IO.      (line 24)
+* Random_Generator:                      Core API.             (line 49)
+* Reduce_LR_On_Plateau:                  Optimization and Losses.
+                                                               (line 20)
+* Reduction:                             Optimization and Losses.
+                                                               (line  7)
+* ReLU:                                  Neural Network Layers.
+                                                               (line 16)
+* RMS_Norm:                              Neural Network Layers.
+                                                               (line 16)
+* RMSprop:                               Optimization and Losses.
+                                                               (line 20)
+* RNN:                                   Neural Network Layers.
+                                                               (line 16)
+* RoPE:                                  Neural Network Layers.
+                                                               (line 16)
+* Rotary_Embedding:                      Neural Network Layers.
+                                                               (line 16)
+* Saved_Variable:                        Autograd Engine.      (line  7)
+* Sequential:                            Neural Network Layers.
+                                                               (line 16)
+* SGD:                                   Optimization and Losses.
+                                                               (line 20)
+* Shape_Error:                           Core API.             (line 20)
+* Shape_Vector:                          Tensors and Operations.
+                                                               (line  7)
+* Sigmoid:                               Neural Network Layers.
+                                                               (line 16)
+* SiLU:                                  Neural Network Layers.
+                                                               (line 16)
+* Smooth_L1_Loss:                        Optimization and Losses.
+                                                               (line  7)
+* Softmax:                               Neural Network Layers.
+                                                               (line 16)
+* State_Dict:                            Neural Network Layers.
+                                                               (line 16)
+* Step_LR:                               Optimization and Losses.
+                                                               (line 20)
+* Stride_Vector:                         Tensors and Operations.
+                                                               (line  7)
+* Tabular_Dataset:                       Training and IO.      (line  7)
+* Tanh:                                  Neural Network Layers.
+                                                               (line 16)
+* Tensor:                                Tensors and Operations.
+                                                               (line 11)
+* Tensor_Dataset:                        Training and IO.      (line  7)
+* Tensor_Options:                        Tensors and Operations.
+                                                               (line  7)
+* Trainable_Module:                      Training and IO.      (line 24)
+* Trainer:                               Training and IO.      (line 24)
+* Trainer_Config:                        Training and IO.      (line 24)
+* Transform:                             Training and IO.      (line  7)
+* Transformer_Decoder:                   Neural Network Layers.
+                                                               (line 16)
+* Transformer_Decoder_Layer:             Neural Network Layers.
+                                                               (line 16)
+* Transformer_Encoder:                   Neural Network Layers.
+                                                               (line 16)
+* Transformer_Encoder_Layer:             Neural Network Layers.
+                                                               (line 16)
+
+
+File: basalt-dl.info,  Node: Function Index,  Prev: Type Index,  Up: Top
+
+Function Index
+**************
+
+ [index ]
+* Menu:
+
+* abs:                                   Tensors and Operations.
+                                                               (line 28)
+* accuracy:                              Optimization and Losses.
+                                                               (line 17)
+* adaptive_avg_pool2d:                   Neural Network Layers.
+                                                               (line  9)
+* add:                                   Tensors and Operations.
+                                                               (line 28)
+* add_scalar:                            Tensors and Operations.
+                                                               (line 28)
+* addmm:                                 Tensors and Operations.
+                                                               (line 28)
+* all_reduce_gradients:                  Training and IO.      (line 20)
+* allclose:                              Tensors and Operations.
+                                                               (line 28)
+* apply_rotary_pos_emb:                  Neural Network Layers.
+                                                               (line  9)
+* arange:                                Tensors and Operations.
+                                                               (line 23)
+* argmax:                                Tensors and Operations.
+                                                               (line 28)
+* argmin:                                Tensors and Operations.
+                                                               (line 28)
+* autocast_cast:                         Training and IO.      (line 11)
+* avg_pool1d:                            Neural Network Layers.
+                                                               (line  9)
+* avg_pool2d:                            Neural Network Layers.
+                                                               (line  9)
+* avg_pool3d:                            Neural Network Layers.
+                                                               (line  9)
+* backward:                              Autograd Engine.      (line 14)
+* balanced_f1_score:                     Optimization and Losses.
+                                                               (line 17)
+* basalt_last_error:                     C API and CLI Tools.  (line  9)
+* basalt_last_error <1>:                 C API and CLI Tools.  (line 10)
+* basalt_mlp_create:                     C API and CLI Tools.  (line 10)
+* basalt_mlp_destroy:                    C API and CLI Tools.  (line 10)
+* basalt_mlp_forward:                    C API and CLI Tools.  (line 10)
+* basalt_mlp_load:                       C API and CLI Tools.  (line 10)
+* basalt_mlp_save:                       C API and CLI Tools.  (line 10)
+* basalt_mlp_train_step:                 C API and CLI Tools.  (line 10)
+* basalt_seed_everything:                C API and CLI Tools.  (line 10)
+* basalt_tensor_add:                     C API and CLI Tools.  (line 10)
+* basalt_tensor_backward:                C API and CLI Tools.  (line 10)
+* basalt_tensor_copy_to_host:            C API and CLI Tools.  (line 10)
+* basalt_tensor_create:                  C API and CLI Tools.  (line 10)
+* basalt_tensor_destroy:                 C API and CLI Tools.  (line 10)
+* basalt_tensor_dtype:                   C API and CLI Tools.  (line 10)
+* basalt_tensor_from_data:               C API and CLI Tools.  (line 10)
+* basalt_tensor_grad:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_item:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_matmul:                  C API and CLI Tools.  (line 10)
+* basalt_tensor_mean:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_mul:                     C API and CLI Tools.  (line 10)
+* basalt_tensor_ndim:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_numel:                   C API and CLI Tools.  (line 10)
+* basalt_tensor_ones:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_relu:                    C API and CLI Tools.  (line 10)
+* basalt_tensor_set_requires_grad:       C API and CLI Tools.  (line 10)
+* basalt_tensor_shape:                   C API and CLI Tools.  (line 10)
+* basalt_tensor_sum:                     C API and CLI Tools.  (line 10)
+* basalt_tensor_zeros:                   C API and CLI Tools.  (line 10)
+* basalt_version_major:                  Core API.             (line 10)
+* basalt_version_major <1>:              Core API.             (line 11)
+* basalt_version_minor:                  Core API.             (line 13)
+* basalt_version_minor <1>:              Core API.             (line 14)
+* basalt_version_patch:                  Core API.             (line 16)
+* basalt_version_patch <1>:              Core API.             (line 17)
+* basalt_version_string:                 Core API.             (line  6)
+* basalt_version_string <1>:             Core API.             (line  7)
+* basalt::backward:                      Autograd Engine.      (line 11)
+* basalt::cuda_is_available:             Core API.             (line 44)
+* basalt::dtype_size:                    Core API.             (line 35)
+* basalt::F::scaled_dot_product_attention: Neural Network Layers.
+                                                               (line  6)
+* basalt::io::save_checkpoint:           Training and IO.      (line 14)
+* basalt::loss::cross_entropy_loss:      Optimization and Losses.
+                                                               (line 10)
+* basalt::metrics::accuracy:             Optimization and Losses.
+                                                               (line 15)
+* basalt::nn::init::kaiming_uniform_:    Neural Network Layers.
+                                                               (line 11)
+* basalt::ops::matmul:                   Tensors and Operations.
+                                                               (line 26)
+* basalt::optim::clip_grad_norm_:        Optimization and Losses.
+                                                               (line 23)
+* basalt::report_diagnostic:             Core API.             (line 24)
+* basalt::seed_everything:               Core API.             (line 52)
+* basalt::zeros:                         Tensors and Operations.
+                                                               (line 21)
+* batch_norm:                            Neural Network Layers.
+                                                               (line  9)
+* bce_with_logits_loss:                  Optimization and Losses.
+                                                               (line 13)
+* bmm:                                   Tensors and Operations.
+                                                               (line 28)
+* broadcast_parameters:                  Training and IO.      (line 20)
+* broadcast_shapes:                      Tensors and Operations.
+                                                               (line 23)
+* cat:                                   Tensors and Operations.
+                                                               (line 28)
+* checkpoint:                            Autograd Engine.      (line 14)
+* chunk:                                 Tensors and Operations.
+                                                               (line 28)
+* clamp:                                 Tensors and Operations.
+                                                               (line 28)
+* clip_grad_norm_:                       Optimization and Losses.
+                                                               (line 26)
+* clip_grad_value_:                      Optimization and Losses.
+                                                               (line 26)
+* constant_:                             Neural Network Layers.
+                                                               (line 13)
+* conv_transpose2d:                      Neural Network Layers.
+                                                               (line  9)
+* conv1d:                                Neural Network Layers.
+                                                               (line  9)
+* conv2d:                                Neural Network Layers.
+                                                               (line  9)
+* conv3d:                                Neural Network Layers.
+                                                               (line  9)
+* cos:                                   Tensors and Operations.
+                                                               (line 28)
+* cosine_embedding_loss:                 Optimization and Losses.
+                                                               (line 13)
+* cosine_similarity:                     Neural Network Layers.
+                                                               (line  9)
+* cross_entropy_loss:                    Optimization and Losses.
+                                                               (line 13)
+* cuda_device_count:                     Core API.             (line 45)
+* cuda_has_hardware_driver:              Core API.             (line 45)
+* cuda_is_available:                     Core API.             (line 45)
+* default_collate:                       Training and IO.      (line  7)
+* default_generator:                     Core API.             (line 53)
+* device_synchronize:                    Core API.             (line 45)
+* diagnostic_logging_enabled:            Core API.             (line 26)
+* div:                                   Tensors and Operations.
+                                                               (line 28)
+* div_scalar:                            Tensors and Operations.
+                                                               (line 28)
+* dot:                                   Tensors and Operations.
+                                                               (line 28)
+* dropout:                               Neural Network Layers.
+                                                               (line  9)
+* dtype_from_name:                       Core API.             (line 36)
+* dtype_name:                            Core API.             (line 36)
+* dtype_of:                              Core API.             (line 36)
+* dtype_size:                            Core API.             (line 36)
+* elu:                                   Tensors and Operations.
+                                                               (line 28)
+* embedding:                             Neural Network Layers.
+                                                               (line  9)
+* empty:                                 Tensors and Operations.
+                                                               (line 23)
+* eq:                                    Tensors and Operations.
+                                                               (line 28)
+* exp:                                   Tensors and Operations.
+                                                               (line 28)
+* explained_variance:                    Optimization and Losses.
+                                                               (line 17)
+* expm1:                                 Tensors and Operations.
+                                                               (line 28)
+* export_onnx:                           Training and IO.      (line 16)
+* eye:                                   Tensors and Operations.
+                                                               (line 23)
+* from_bellows_table:                    Tensors and Operations.
+                                                               (line 23)
+* from_blob:                             Tensors and Operations.
+                                                               (line 23)
+* full:                                  Tensors and Operations.
+                                                               (line 23)
+* full_like:                             Tensors and Operations.
+                                                               (line 23)
+* gather:                                Tensors and Operations.
+                                                               (line 28)
+* ge:                                    Tensors and Operations.
+                                                               (line 28)
+* gelu:                                  Tensors and Operations.
+                                                               (line 28)
+* grad:                                  Autograd Engine.      (line 14)
+* gradcheck:                             Autograd Engine.      (line 14)
+* gradgradcheck:                         Autograd Engine.      (line 14)
+* group_norm:                            Neural Network Layers.
+                                                               (line  9)
+* gt:                                    Tensors and Operations.
+                                                               (line 28)
+* huber_loss:                            Optimization and Losses.
+                                                               (line 13)
+* import_onnx_weights:                   Training and IO.      (line 16)
+* index_select:                          Tensors and Operations.
+                                                               (line 28)
+* inspect_artifact:                      Training and IO.      (line 16)
+* is_floating_point:                     Core API.             (line 36)
+* is_integral:                           Core API.             (line 36)
+* kaiming_normal_:                       Neural Network Layers.
+                                                               (line 13)
+* kaiming_uniform_:                      Neural Network Layers.
+                                                               (line 13)
+* kl_div_loss:                           Optimization and Losses.
+                                                               (line 13)
+* l1_loss:                               Optimization and Losses.
+                                                               (line 13)
+* layer_norm:                            Neural Network Layers.
+                                                               (line  9)
+* le:                                    Tensors and Operations.
+                                                               (line 28)
+* leaky_relu:                            Tensors and Operations.
+                                                               (line 28)
+* linear:                                Neural Network Layers.
+                                                               (line  9)
+* linspace:                              Tensors and Operations.
+                                                               (line 23)
+* load_checkpoint:                       Training and IO.      (line 16)
+* load_model:                            Training and IO.      (line 16)
+* load_onnx_model:                       Training and IO.      (line 16)
+* load_safetensors:                      Training and IO.      (line 16)
+* log:                                   Tensors and Operations.
+                                                               (line 28)
+* log_softmax:                           Tensors and Operations.
+                                                               (line 28)
+* log1p:                                 Tensors and Operations.
+                                                               (line 28)
+* logsumexp:                             Tensors and Operations.
+                                                               (line 28)
+* lt:                                    Tensors and Operations.
+                                                               (line 28)
+* masked_fill:                           Tensors and Operations.
+                                                               (line 28)
+* matmul:                                Tensors and Operations.
+                                                               (line 28)
+* max:                                   Tensors and Operations.
+                                                               (line 28)
+* max_pool1d:                            Neural Network Layers.
+                                                               (line  9)
+* max_pool2d:                            Neural Network Layers.
+                                                               (line  9)
+* max_pool3d:                            Neural Network Layers.
+                                                               (line  9)
+* mean:                                  Tensors and Operations.
+                                                               (line 28)
+* mean_absolute_error:                   Optimization and Losses.
+                                                               (line 17)
+* mean_squared_error:                    Optimization and Losses.
+                                                               (line 17)
+* min:                                   Tensors and Operations.
+                                                               (line 28)
+* mish:                                  Tensors and Operations.
+                                                               (line 28)
+* mse_loss:                              Optimization and Losses.
+                                                               (line 13)
+* mul:                                   Tensors and Operations.
+                                                               (line 28)
+* mul_scalar:                            Tensors and Operations.
+                                                               (line 28)
+* ne:                                    Tensors and Operations.
+                                                               (line 28)
+* neg:                                   Tensors and Operations.
+                                                               (line 28)
+* nll_loss:                              Optimization and Losses.
+                                                               (line 13)
+* norm:                                  Tensors and Operations.
+                                                               (line 28)
+* normal_:                               Neural Network Layers.
+                                                               (line 13)
+* ones:                                  Tensors and Operations.
+                                                               (line 23)
+* ones_:                                 Neural Network Layers.
+                                                               (line 13)
+* ones_like:                             Tensors and Operations.
+                                                               (line 23)
+* orthogonal_:                           Neural Network Layers.
+                                                               (line 13)
+* outer:                                 Tensors and Operations.
+                                                               (line 28)
+* pad2d:                                 Tensors and Operations.
+                                                               (line 28)
+* perplexity:                            Optimization and Losses.
+                                                               (line 17)
+* pow:                                   Tensors and Operations.
+                                                               (line 28)
+* pow_scalar:                            Tensors and Operations.
+                                                               (line 28)
+* promote_dtypes:                        Core API.             (line 36)
+* rand:                                  Tensors and Operations.
+                                                               (line 23)
+* randint:                               Tensors and Operations.
+                                                               (line 23)
+* randn:                                 Tensors and Operations.
+                                                               (line 23)
+* rdiv_scalar:                           Tensors and Operations.
+                                                               (line 28)
+* relu:                                  Tensors and Operations.
+                                                               (line 28)
+* report_diagnostic:                     Core API.             (line 26)
+* report_tool_diagnostic:                Core API.             (line 26)
+* rms_norm:                              Neural Network Layers.
+                                                               (line  9)
+* roc_auc_score:                         Optimization and Losses.
+                                                               (line 17)
+* root_mean_squared_error:               Optimization and Losses.
+                                                               (line 17)
+* rsqrt:                                 Tensors and Operations.
+                                                               (line 28)
+* rsub_scalar:                           Tensors and Operations.
+                                                               (line 28)
+* save_checkpoint:                       Training and IO.      (line 16)
+* save_model:                            Training and IO.      (line 16)
+* save_safetensors:                      Training and IO.      (line 16)
+* scalar_tensor:                         Tensors and Operations.
+                                                               (line 23)
+* scaled_dot_product_attention:          Neural Network Layers.
+                                                               (line  9)
+* scatter:                               Training and IO.      (line 20)
+* seed_everything:                       Core API.             (line 53)
+* set_diagnostic_logging:                Core API.             (line 26)
+* set_virtual_cuda_device_count:         Core API.             (line 45)
+* sigmoid:                               Tensors and Operations.
+                                                               (line 28)
+* sign:                                  Tensors and Operations.
+                                                               (line 28)
+* silu:                                  Tensors and Operations.
+                                                               (line 28)
+* sin:                                   Tensors and Operations.
+                                                               (line 28)
+* smooth_l1_loss:                        Optimization and Losses.
+                                                               (line 13)
+* softmax:                               Tensors and Operations.
+                                                               (line 28)
+* softplus:                              Tensors and Operations.
+                                                               (line 28)
+* split:                                 Tensors and Operations.
+                                                               (line 28)
+* sqrt:                                  Tensors and Operations.
+                                                               (line 28)
+* square:                                Tensors and Operations.
+                                                               (line 28)
+* stack:                                 Tensors and Operations.
+                                                               (line 28)
+* sub:                                   Tensors and Operations.
+                                                               (line 28)
+* sub_scalar:                            Tensors and Operations.
+                                                               (line 28)
+* sum:                                   Tensors and Operations.
+                                                               (line 28)
+* tanh:                                  Tensors and Operations.
+                                                               (line 28)
+* tensor:                                Tensors and Operations.
+                                                               (line 23)
+* to_bellows_table:                      Tensors and Operations.
+                                                               (line 23)
+* top_k_accuracy:                        Optimization and Losses.
+                                                               (line 17)
+* tril:                                  Tensors and Operations.
+                                                               (line 28)
+* triu:                                  Tensors and Operations.
+                                                               (line 28)
+* uniform_:                              Neural Network Layers.
+                                                               (line 13)
+* var:                                   Tensors and Operations.
+                                                               (line 28)
+* where:                                 Tensors and Operations.
+                                                               (line 28)
+* xavier_normal_:                        Neural Network Layers.
+                                                               (line 13)
+* xavier_uniform_:                       Neural Network Layers.
+                                                               (line 13)
+* zeros:                                 Tensors and Operations.
+                                                               (line 23)
+* zeros_:                                Neural Network Layers.
+                                                               (line 13)
+* zeros_like:                            Tensors and Operations.
+                                                               (line 23)
+
+
+
+Tag Table:
+Node: Top627
+Node: Overview2084
+Node: Tutorial4219
+Node: Internals5156
+Node: Core API6654
+Node: Tensors and Operations8839
+Node: Autograd Engine10248
+Node: Neural Network Layers11058
+Node: Optimization and Losses11811
+Node: Training and IO12940
+Node: C API and CLI Tools14117
+Node: Type Index15052
+Node: Function Index31772
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

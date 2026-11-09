@@ -1,0 +1,200 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6)",
+    "driver": "NVIDIA 550.163.01 / CUDA 12.4.131",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T19:15:00Z",
+  "metrics": [
+    {
+      "name": "cold_start_init",
+      "value": 0.2524,
+      "p50": 0.2524,
+      "p99": 0.2691,
+      "unit": "ms",
+      "secondary": 3961.2824,
+      "secondary_unit": "inits/s",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-cold-start-initialization",
+      "sanity_check": { "passed": true, "details": "Agent::create + AgentRuntime(10) ok" }
+    },
+    {
+      "name": "tool_10x20ms_sequential",
+      "value": 201.2785,
+      "p50": 201.2785,
+      "p99": 201.5050,
+      "unit": "ms",
+      "secondary": 1.0000,
+      "secondary_unit": "x",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-parallel-vs-sequential-tool-execution",
+      "sanity_check": { "passed": true, "details": "10 sequential tool outputs verified == io_ok" }
+    },
+    {
+      "name": "tool_10x20ms_parallel",
+      "value": 20.3457,
+      "p50": 20.3457,
+      "p99": 20.3720,
+      "unit": "ms",
+      "secondary": 9.8929,
+      "secondary_unit": "x speedup",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-parallel-vs-sequential-tool-execution",
+      "sanity_check": { "passed": true, "details": "10 parallel tool outputs verified == io_ok" }
+    },
+    {
+      "name": "overlapped_cpu_utilization",
+      "value": 662.1666,
+      "p50": 662.1666,
+      "p99": 692.9745,
+      "unit": "%",
+      "secondary": 6.6217,
+      "secondary_unit": "active_cores",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3-overlapped-inference-and-tool-cpu",
+      "sanity_check": { "passed": true, "details": "All overlapped turns returned overlap_complete" }
+    },
+    {
+      "name": "checkpoint_500turn_early_10_60",
+      "value": 3.4552,
+      "p50": 3.4552,
+      "p99": 3.5535,
+      "unit": "ms/turn",
+      "secondary": 289.4219,
+      "secondary_unit": "turns/s",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-incremental-binary-checkpointing",
+      "sanity_check": { "passed": true, "details": "Checkpoint file verified bytes=355600" }
+    },
+    {
+      "name": "checkpoint_500turn_late_450_500",
+      "value": 3.4321,
+      "p50": 3.4321,
+      "p99": 3.6008,
+      "unit": "ms/turn",
+      "secondary": 291.3627,
+      "secondary_unit": "turns/s",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-incremental-binary-checkpointing",
+      "sanity_check": { "passed": true, "details": "Checkpoint file verified bytes=355600" }
+    },
+    {
+      "name": "theoretical_min_direct_dispatch",
+      "value": 0.0211,
+      "p50": 0.0211,
+      "p99": 0.0215,
+      "unit": "us/turn",
+      "secondary": 47497476.6966,
+      "secondary_unit": "calls/s (raw C++)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "Indirect fn_ptr(41) + mutex verified == 42" }
+    },
+    {
+      "name": "mock_llm_zero_wait_orchestration_n1",
+      "value": 3.7575,
+      "p50": 3.7575,
+      "p99": 3.8425,
+      "unit": "us/turn",
+      "secondary": 266134.3979,
+      "secondary_unit": "turns/s (mock-LLM)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "All async handles returned final_answer == 42" }
+    },
+    {
+      "name": "mock_llm_zero_wait_orchestration_n2",
+      "value": 2.5899,
+      "p50": 2.5899,
+      "p99": 2.6773,
+      "unit": "us/turn",
+      "secondary": 386115.2940,
+      "secondary_unit": "turns/s (mock-LLM)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "All async handles returned final_answer == 42" }
+    },
+    {
+      "name": "mock_llm_zero_wait_orchestration_n4",
+      "value": 1.8993,
+      "p50": 1.8993,
+      "p99": 2.0767,
+      "unit": "us/turn",
+      "secondary": 526510.4598,
+      "secondary_unit": "turns/s (mock-LLM)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "All async handles returned final_answer == 42" }
+    },
+    {
+      "name": "mock_llm_zero_wait_orchestration_n8",
+      "value": 1.6008,
+      "p50": 1.6008,
+      "p99": 1.6264,
+      "unit": "us/turn",
+      "secondary": 624705.2172,
+      "secondary_unit": "turns/s (mock-LLM)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "All async handles returned final_answer == 42" }
+    },
+    {
+      "name": "mock_llm_zero_wait_orchestration_n16",
+      "value": 1.3944,
+      "p50": 1.3944,
+      "p99": 1.4281,
+      "unit": "us/turn",
+      "secondary": 717179.7266,
+      "secondary_unit": "turns/s (mock-LLM)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-mock-llm-zero-wait-orchestration",
+      "sanity_check": { "passed": true, "details": "All async handles returned final_answer == 42" }
+    },
+    {
+      "name": "semantic_search_cpu_1000x1536",
+      "value": 151.8690,
+      "p50": 151.8690,
+      "p99": 156.4364,
+      "unit": "us/query",
+      "secondary": 6584.6223,
+      "secondary_unit": "queries/s (CPU SIMD)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-semantic-memory-vector-search",
+      "sanity_check": { "passed": true, "details": "Top-1 id == doc_999 within 1e-4 of fp64 dot" }
+    },
+    {
+      "name": "semantic_search_gpu_1000x1536",
+      "value": 1390.7920,
+      "p50": 1390.7920,
+      "p99": 1974.9325,
+      "unit": "us/query",
+      "secondary": 719.0148,
+      "secondary_unit": "queries/s (GPU+PCIe)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-semantic-memory-vector-search",
+      "sanity_check": { "passed": true, "details": "Top-1 id == doc_999 within 1e-4 of fp64 dot" }
+    },
+    {
+      "name": "rss_bare_process",
+      "value": 109.1289,
+      "p50": 109.1289,
+      "p99": 109.1289,
+      "unit": "MB",
+      "secondary": 0.0000,
+      "secondary_unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-three-stage-process-rss",
+      "sanity_check": { "passed": true, "details": "Sampled at first line of main()" }
+    },
+    {
+      "name": "rss_post_library_load",
+      "value": 111.3008,
+      "p50": 111.3008,
+      "p99": 111.3008,
+      "unit": "MB",
+      "secondary": 2.1719,
+      "secondary_unit": "MB delta",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-three-stage-process-rss",
+      "sanity_check": { "passed": true, "details": "Post-Sutra-Init delta <= 20 MB budget" }
+    },
+    {
+      "name": "rss_post_gpu_init",
+      "value": 215.4375,
+      "p50": 215.4375,
+      "p99": 215.4375,
+      "unit": "MB",
+      "secondary": 0.0000,
+      "secondary_unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-three-stage-process-rss",
+      "sanity_check": { "passed": true, "details": "Sampled after CUDA search + 1s idle" }
+    }
+  ]
+}

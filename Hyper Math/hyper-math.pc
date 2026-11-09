@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: GNU Hyper Math
+Description: Clean-room C++20 library unifying NumPy, SciPy, Pandas, and Polars under GPLv3+
+URL: https://www.gnu.org/software/hyper-math/
+Version: 0.1.0
+Libs: -L${libdir} -lhypermath -pthread
+Cflags: -I${includedir} -std=c++20

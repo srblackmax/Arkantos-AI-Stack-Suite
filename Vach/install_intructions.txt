@@ -1,0 +1,32 @@
+================================================================================
+VACH — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Vach Native C++23 Voice I/O Library (Layer 9 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Vach
+Dependencies:
+  - C++23 compiler (GCC 14+)
+  - ALSA development headers (libasound2-dev)
+  - whisper.cpp (installed in ~/.local/lib/libwhisper.so and ~/.local/include)
+  - Piper TTS runtime & ONNX voice model (en_US-bryce-medium.onnx in ~/models)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Vach"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+
+2. RUN TEST SUITE (GNU Style & Vach Unit/Audio/STT/TTS Tests)
+-------------------------------------------------------------
+  ctest --test-dir build-release --output-on-failure
+
+3. INSTALL TO ~/.local
+----------------------
+  cmake --install build-release --prefix "$HOME/.local"
+
+4. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release       : Optimized Release build (-O3 -march=native)
+  - release-asan  : Release + AddressSanitizer & UBSan
+  - release-tsan  : Release + ThreadSanitizer

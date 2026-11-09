@@ -1,0 +1,166 @@
+Hyper Math NEWS -- history of user-visible changes.
+
+Copyright (C) 2026 Kival
+See the end of the file for license conditions.
+
+Please send Hyper Math bug reports via the project issue tracker.
+
+Version 0.1.0 (2026-10-30)
+
+* Initial clean-room release of Hyper Math under GNU GPLv3+.
+* Core Engine:
+  - 64-byte cache-line aligned reference-counted slab memory allocator.
+  - 64-bit word-aligned hardware popcount validity bitmask engine.
+  - Clean-room xoshiro256** and Box-Muller pseudo-random number generator plus
+    full multivariate & discrete sampling (`random_binomial`, `random_poisson`,
+    `random_gamma`, `random_beta`, `random_weibull`, `random_chisquare`,
+    `random_student_t`, `random_f`, `random_dirichlet`, `random_multinomial`,
+    `random_multivariate_normal`, `random_choice`).
+  - CODATA 2022 physical & SI prefix constants (`c`, `h`, `hbar`, `G`, `e_charge`,
+    `k`, `N_A`, `R`, `sigma`, `alpha`, `convert_temperature`).
+* Tensor Engine (NumPy capability layer):
+  - Rank-agnostic affine stride lattice (`nd_tensor<T>`) with zero-copy slicing,
+    transposition, reshaping, and contradiction-free N-D broadcasting.
+  - Compile-time lazily fused expression templates (`tensor_expr`), parallel
+    materialization for large arrays, and universal mathematical, complex, and
+    IEEE-754 functions (`sin`, `cos`, `exp`, `exp2`, `expm1`, `log`, `log1p`,
+    `logaddexp`, `logaddexp2`, `sqrt`, `cbrt`, `pow`, `gcd`, `lcm`, `i0`,
+    `nan_to_num`, `real_if_close`, `angle`, `conj`, `clip`, `where`,
+    `piecewise`, `allclose`, `isclose`, `array_equal`, `array_equiv`, `sinc`,
+    `heaviside`).
+  - Axis/full and NaN-safe reductions (`sum`/`nansum`, `mean`/`nanmean`,
+    `var`/`nanvar`, `std_dev`/`nanstd`, `min`/`nanmin`, `max`/`nanmax`,
+    `argmin`/`nanargmin`, `argmax`/`nanargmax`, `cumsum`/`nancumsum`,
+    `cumprod`/`nancumprod`, `median`/`nanmedian`, `percentile`/`nanpercentile`,
+    `quantile`/`nanquantile`), L1/L2 cache-tiled parallel matrix multiplication
+    (`matmul`, `dot`, `vdot`, `inner`, `outer`, `kron`, `tensordot`,
+    `multi_dot`), and generalized Einstein summation (`einsum`, `einsum_path`).
+  - Array manipulation, window functions (`bartlett`, `blackman`, `hamming`,
+    `hanning`, `kaiser`), sliding-window views (`sliding_window_view`),
+    polynomial calculus (`polyfit`, `polyval`, `polyadd`, `polysub`, `polymul`,
+    `polydiv`, `polyder`, `polyint`, `poly`), set operations (`intersect1d`,
+    `union1d`, `setdiff1d`, `setxor1d`, `isin`), multi-index coordinate
+    conversion (`unravel_index`, `ravel_multi_index`, `indices`, `ix_`), and
+    NumPy `.npy` v1.0 & `.npz` multi-tensor archive I/O (`save_npy`, `load_npy`,
+    `save_npz`, `load_npz`).
+* Scientific Continuum (SciPy capability layer):
+  - Linear Algebra (`linalg`): Doolittle-Crout LU with partial pivoting (`lu`),
+    symmetric indefinite `ldl`, Householder QR & column-pivoted QR (`qr_pivoted`,
+    `rq`, `qz`), Cholesky, Hessenberg reduction (`hessenberg`), Jacobi/QR
+    eigenvalues & eigenvectors (`eigh`, `eigh_generalized`, `eigh_tridiagonal`,
+    `schur`, `rsf2csf`, `eig`, `eigvals`), SVD (`svd`, `svdvals`, `diagsvd`,
+    `subspace_angles`), Moore-Penrose pseudoinverse (`pinv`), 1D/2D linear least
+    squares (`lstsq`), matrix functions (`expm`, `expm_frechet`,
+    `fractional_matrix_power`, `funm`, `cosm`, `sinm`, `tanm`, `coshm`, `sinhm`,
+    `tanhm`, `signm`, `sqrtm`, `logm_spd`, `polar`), structured matrices
+    (`toeplitz`, `circulant`, `hankel`, `hilbert`, `invhilbert`, `hadamard`,
+    `companion`, `leslie`, `fiedler`, `pascal`, `invpascal`, `helmert`,
+    `dft_matrix`, `khatri_rao`, `clarkson_woodruff_transform`), banded solvers
+    (`solve_banded`, `cholesky_banded`, `cho_solve_banded`), and Sylvester/
+    Lyapunov/Riccati solvers (`solve_sylvester`, `solve_continuous_lyapunov`,
+    `solve_discrete_lyapunov`, `solve_continuous_are`, `solve_discrete_are`).
+  - Fast Fourier Transform (`fft`): Mixed-radix Cooley-Tukey and Bluestein
+    Chirp-Z arbitrary-length 1D, 2D, and N-D forward/inverse FFT, DCT, DST, and
+    Fast Hankel Transform (`fft`, `ifft`, `rfft`, `irfft`, `hfft`, `ihfft`,
+    `fft2`, `ifft2`, `rfft2`, `irfft2`, `fftn`, `ifftn`, `rfftn`, `irfftn`,
+    `dct`, `idct`, `dct2`, `idct2`, `dst`, `idst`, `fht`, `ifht`, `hilbert_fft`,
+    `next_fast_len`, `convolve_fft`).
+  - Numerical Integration & ODEs (`integrate`): Adaptive Gauss-Kronrod G7-K15
+    1D/2D/3D/N-D quadrature (`quad`, `quad_vec`, `dblquad`, `tplquad`, `nquad`),
+    Romberg integration (`romberg`, `romb`), Golub-Welsch Gauss-Legendre &
+    tanh-sinh quadrature (`leggauss`, `fixed_quad`, `tanhsinh`), Simpson's/
+    trapezoidal/cumulative rules (`cumulative_simpson`), Dormand-Prince RK4(5),
+    RK23, DOP853, & stiff implicit Radau/BDF ODE solvers with root events
+    (`solve_ivp`, `solve_ivp_events`), and two-point boundary value solver
+    (`solve_bvp`).
+  - Optimization (`optimize`): Root finders (`brentq`, `brenth`, `ridder`,
+    `secant`, `halley`, `fixed_point`, `fsolve`, `broyden1`), scalar &
+    multivariate minimizers (BFGS, L-BFGS-B, Conjugate Gradient `minimize_cg`,
+    Newton-CG `minimize_newton_cg`, Powell `minimize_powell`, Dogleg/Trust-NCG
+    trust-region, Nelder-Mead simplex), Levenberg-Marquardt & bounded least
+    squares (`least_squares_lm`, `least_squares_bounds`, `curve_fit`),
+    Non-Negative & Bounded Least Squares (`nnls`, `lsq_linear`), Simplex & MILP
+    (`linprog`, `milp`), SLSQP constrained optimization (`minimize_slsqp`),
+    global optimizers (`dual_annealing`, `differential_evolution`,
+    `basinhopping`, `shgo`, `direct`), and combinatorial assignment
+    (`linear_sum_assignment`, `quadratic_assignment`).
+  - Statistics, Special Functions & QMC (`stats`): Complete special function
+    suite (`gamma`, `digamma`, `polygamma`, `beta`, `erf`, `erfc`, `erfinv`,
+    `erfcinv`, `dawsn`, `fresnel`, `sici`, `shichi`, `exp1`, `expi`, `spence`,
+    `lambertw`, `wrightomega`, `zeta`, `riemann_zeta`, `bernoulli_number`,
+    `euler_number`, `airy`, `jv`, `yv`, `kv`, `iv`, `spherical_jn`,
+    `spherical_yn`, `assoc_legendre`, `sph_harm_y`, `eval_hermite`,
+    `eval_laguerre`, `eval_jacobi`, `hyp2f1`, `hyp1f1`, `ellipk`, `ellipe`,
+    `poch`, `logsumexp`, `softmax`), 22 probability distributions (univariate,
+    discrete, `multivariate_normal_dist`, `dirichlet_dist`, `wishart_dist`),
+    Quasi-Monte Carlo (`qmc::halton`, `qmc::sobol`, `qmc::latin_hypercube`,
+    `qmc::poisson_disk`, `qmc::discrepancy`), resampling (`bootstrap`,
+    `permutation_test`, `monte_carlo_test`), 25+ parametric & nonparametric
+    hypothesis tests, Gaussian KDE (`gaussian_kde`), and SVD-based `pca`.
+  - Interpolation (`interpolate`): Natural/clamped `cubic_spline`, `akima_1d`,
+    monotonic `pchip_interpolator`, `barycentric_interpolator`, `krogh_interpolator`,
+    `cubic_hermite_spline`, arbitrary-degree `bspline` (`make_interp_spline`,
+    `make_lsq_spline`, `make_smoothing_spline`), parametric `splprep`/`splev`,
+    scattered N-D `rbf_interpolator`, 2D/3D rectilinear grid interpolators, and
+    Delaunay scattered `griddata_2d`.
+  - Signal Processing (`signal`): FIR/IIR filter design (`firwin`, `firwin2`,
+    `firls`, `minimum_phase`, `butter_lowpass_ba`, `cheby1_lowpass_ba`,
+    `cheby2_lowpass_ba`, `ellip_lowpass_ba`, `bessel_lowpass_ba`, `iirnotch`,
+    `iirpeak`, `bilinear_zpk`, `tf2zpk`, `zpk2tf`, `tf2sos`, `sos2tf`,
+    `tf2ss`, `ss2tf`), zero-phase & SOS filtering (`lfilter`, `filtfilt`,
+    `sosfilt`, `sosfiltfilt`, `savgol_filter`, `wiener`, `medfilt`,
+    `median_filter2d`), spectral estimation (`welch`, `periodogram`, `csd`,
+    `coherence`, `spectrogram`, `stft`, `istft`, `lombscargle`, `czt`), peak
+    analysis (`find_peaks`, `peak_prominences`, `peak_widths`, `cwt_ricker`),
+    and Continuous/Discrete LTI state-space simulation (`lti_system`, `lsim`,
+    `step_response`, `impulse_response`, `bode`).
+  - Sparse Linear Algebra & Graphs (`sparse`): CSR, CSC, COO, DIA, BSR, DOK, and
+    LIL sparse matrices, algebraic builders (`sparse_eye`, `diags`, `sp_kron`,
+    `sp_hstack`, `sp_vstack`, ` sp_block_diag`, `random_sparse`), iterative &
+    direct solvers (`cg_solve`, `bicgstab_solve`, `gmres_solve`, `minres`,
+    `lsqr`, `spsolve`, `sp_lu`, `sp_ilu`, `eigsh`, `svds`, `expm_multiply`), and
+    `csgraph` algorithms (`connected_components`, `dijkstra`, `bellman_ford`,
+    `floyd_warshall`, `johnson`, `breadth_first_order`, `depth_first_order`,
+    `minimum_spanning_tree`, `topological_sort`, `laplacian`,
+    `reverse_cuthill_mckee`, `structural_rank`, `maximum_bipartite_matching`,
+    `min_weight_full_bipartite_matching`, `maximum_flow`).
+  - Spatial, Rotations & Clustering (`spatial`, `cluster`): Clean-room k-d tree
+    (`kd_tree`), 15-metric `cdist`/`pdist`/`squareform`, 2D Convex Hull,
+    Bowyer-Watson 2D Delaunay triangulation (`delaunay_2d`), bounded Voronoi
+    diagrams (`voronoi_2d`), Spherical Voronoi (`spherical_voronoi`), Halfspace
+    Intersection (`halfspace_intersection_2d`), Boolean polygon clipping
+    (`polygon_clip`), 3D `rotation` (quaternions, Euler angles, rotation
+    vectors, SLERP, Kabsch `align_vectors`) & `rigid_transform` (SE(3)),
+    k-Means++ (`kmeans2`), hierarchical `linkage` (`fcluster`, `cophenet`,
+    `inconsistent`, `optimal_leaf_ordering`), `dbscan`, and `optics`.
+  - Forward & Reverse-Mode Automatic Differentiation (`autograd`): Dual numbers
+    (`dual_number`) and reverse-mode Wengert computation tape (`tape`, `var`).
+* Tabular & Lazy Relational Engine (Pandas & Polars capability layer):
+  - Dual-Bitmask `series` and `data_frame` with O(1) `RangeIndex` and
+    hash-indexed label alignment (`loc`, `iloc`), null handling, rolling/EWM/
+    expanding windows, full `.str` (including regex, hex/base64, JSON path) and
+    ISO-8601 `.dt` (including `dt_strftime`, epoch conversions, business days)
+    accessors, `join`, `join_asof`, `join_cross`, `pivot`, `melt`, `stack`,
+    `unstack`, `crosstab`, `get_dummies`, `explode_delimited`, `combine_first`,
+    `value_counts`, `resample`, `group_by_dynamic`, `upsample`, `partition_by`,
+    string-expression `query` / `eval_expr` / `sql_query`, and CSV, NDJSON,
+    JSON, HTML, Markdown, LaTeX, and `.hmb` binary columnar I/O.
+  - Polars-style declarative `lazy_frame`, `expr` AST (`col`, `lit`, `when`,
+    `coalesce`, `.over`), and `sql_context` SQL query engine with an algebraic
+    query optimizer performing Predicate Pushdown, Projection Pushdown,
+    Dead-Column Pruning, Filter Fusion, and Constant Folding.
+
+----------------------------------------------------------------------
+Copyright information:
+
+Copyright (C) 2026 Kival
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.

@@ -1,0 +1,35 @@
+# Build directories & compiled binaries
+build/
+dist/
+out/
+cmake-build-*/
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+*.apk
+*.dex
+
+# LLM Weights & Large Binary Data (GitHub rejects files over 100MB)
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.onnx
+models/
+
+# Local IDE / OS / Temporary files
+.vscode/
+.idea/
+.antigravity/
+*.swp
+*~
+.DS_Store
+
+# Keys, credentials, or local env files
+*.pem
+*.key
+id_rsa*
+.env

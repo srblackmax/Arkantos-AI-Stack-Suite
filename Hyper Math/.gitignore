@@ -1,0 +1,14 @@
+build/
+build-*/
+*.o
+*.lo
+*.la
+*.a
+*.so
+*.so.*
+*.db
+*.wal
+*.hnsw
+*.gguf
+*.onnx
+polymath_cognitive_architecture.md

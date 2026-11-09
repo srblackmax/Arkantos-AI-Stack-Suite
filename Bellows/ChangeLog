@@ -1,0 +1,30 @@
+2026-10-31  The Bellows Authors  <authors@bellows-ml.org>
+
+  * include/bellows/core/data_table.hpp (data_table::data_table,
+  data_table::operator=): Synchronise validity bitmap before cloning on
+  copy construction and copy assignment.
+  * include/bellows/preprocess/scaling.hpp,
+  include/bellows/preprocess/encoding.hpp,
+  include/bellows/preprocess/selection.hpp,
+  include/bellows/composition/chain.hpp,
+  include/bellows/composition/ensemble.hpp,
+  include/bellows/estimators/proximity.hpp: Use set_cell instead of direct
+  at assignment when copying potentially missing entries so validity
+  bitmaps remain synchronised.
+  * doc/design.md: Add non-derivative C++20 concept lattice and unified
+  stagewise boosting architectural specification.
+  * AGENTS.md: Record project engineering rules, GNU style conventions,
+  and naming policies.
+  * include/bellows/: Implement core concepts, Hyper Math-backed
+  data_table, metrics, unified stagewise booster (including monotonic
+  constraints, gain importances, and validation-monitored early
+  stopping), preprocessing transformers (including principal subspace
+  projection and interaction expansion), classical estimators (including
+  margin/kernel machines and hierarchical/density-reachability
+  clustering), composition chains, consensus/stacked ensembles, grid and
+  Latin hypercube explorers, and binary artefact serialisation across all
+  estimators, preprocessors, and pipelines.
+  * src/: Implement libbellows, bellows, bellows-train, and
+  bellows-infer CLI utilities with full payload checksum verification
+  and CSV validation.
+  * tests/: Implement bellows-check verification and stress test suite.

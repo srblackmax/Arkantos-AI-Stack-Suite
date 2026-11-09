@@ -1,0 +1,4 @@
+# Suppress false positives from uninstrumented CUDA driver libraries under TSan
+called_from_lib:libcuda.so
+called_from_lib:libcudart.so
+called_from_lib:libgomp.so

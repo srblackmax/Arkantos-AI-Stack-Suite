@@ -1,0 +1,133 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K",
+    "gpu": "NVIDIA GeForce RTX 3070",
+    "kernel": "Linux 6.12.113+deb13-amd64",
+    "ram": "46.8 GiB",
+    "disk": "331.7 GiB free"
+  },
+  "model": {
+    "path": "$HOME/models/Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+    "sha256": "842978ba004006ac726e72b84d97b8bb6b6f14a4ddb23f5f41d94a0624ae3ef5",
+    "size_bytes": 4683074240,
+    "registry_version": 1
+  },
+  "turns": [
+    {
+      "id": 1,
+      "category": "baseline",
+      "prompt": "Hello. What model are you?",
+      "response_length": 243,
+      "ttft_ms": 30.308,
+      "total_ms": 818.390,
+      "tokens": 59,
+      "tokens_per_sec": 72.093
+    },
+    {
+      "id": 2,
+      "category": "arithmetic",
+      "prompt": "What is 17 * 23?",
+      "response_length": 392,
+      "ttft_ms": 19.286,
+      "total_ms": 2233.350,
+      "tokens": 170,
+      "tokens_per_sec": 76.119
+    },
+    {
+      "id": 3,
+      "category": "code_generation",
+      "prompt": "Write a Python one-liner that reverses a string.",
+      "response_length": 259,
+      "ttft_ms": 19.263,
+      "total_ms": 998.238,
+      "tokens": 74,
+      "tokens_per_sec": 74.131
+    },
+    {
+      "id": 4,
+      "category": "context_followup",
+      "prompt": "Now translate that to Rust.",
+      "response_length": 692,
+      "ttft_ms": 19.023,
+      "total_ms": 2274.138,
+      "tokens": 168,
+      "tokens_per_sec": 73.874
+    },
+    {
+      "id": 5,
+      "category": "unicode_tokenization",
+      "prompt": "¿Cómo se dice 'good morning' en español?",
+      "response_length": 256,
+      "ttft_ms": 19.864,
+      "total_ms": 920.241,
+      "tokens": 68,
+      "tokens_per_sec": 73.894
+    },
+    {
+      "id": 6,
+      "category": "technical_accuracy",
+      "prompt": "Explain what a KV cache is in one sentence.",
+      "response_length": 196,
+      "ttft_ms": 19.423,
+      "total_ms": 578.763,
+      "tokens": 42,
+      "tokens_per_sec": 72.569
+    },
+    {
+      "id": 7,
+      "category": "creative_generation",
+      "prompt": "Write a haiku about compilers.",
+      "response_length": 70,
+      "ttft_ms": 19.402,
+      "total_ms": 245.560,
+      "tokens": 17,
+      "tokens_per_sec": 69.229
+    },
+    {
+      "id": 8,
+      "category": "long_context_recall",
+      "prompt": "What was the answer to my earlier math question?",
+      "response_length": 125,
+      "ttft_ms": 19.142,
+      "total_ms": 673.892,
+      "tokens": 49,
+      "tokens_per_sec": 72.712
+    },
+    {
+      "id": 9,
+      "category": "list_generation",
+      "prompt": "List three C++23 features I should know about.",
+      "response_length": 1078,
+      "ttft_ms": 20.279,
+      "total_ms": 3421.723,
+      "tokens": 256,
+      "tokens_per_sec": 74.816
+    },
+    {
+      "id": 10,
+      "category": "summarization",
+      "prompt": "Summarize this entire conversation in one sentence.",
+      "response_length": 225,
+      "ttft_ms": 19.460,
+      "total_ms": 566.962,
+      "tokens": 41,
+      "tokens_per_sec": 72.315
+    }
+  ],
+  "aggregate": {
+    "ttft_ms": { "p50": 19.413, "p99": 29.405 },
+    "total_ms": { "p50": 869.316, "p99": 3318.441 },
+    "tok_per_s": { "p50": 73.293, "p99": 76.002 }
+  },
+  "composability": {
+    "check_1": { "passed": true, "details": "Loaded CAS artifact ./Stack Test/stack-integration/yantra_stack_integration_store/models/cas/76/760993249eb89df31c46578fa0ba9a2efc679b5b60af852de8655d4ead22e313 with matching SHA-256 842978ba004006ac726e72b84d97b8bb6b6f14a4ddb23f5f41d94a0624ae3ef5" },
+    "check_2": { "passed": true, "details": "All 40 per-turn metrics (ttft_ms, total_ms, tokens_generated, tokens_per_sec) matched within 1e-6" },
+    "check_3": { "passed": true, "details": "WAL contains exact expected 44 CRC-verified entries written from Sutra async execution thread" },
+    "check_4": { "passed": true, "details": "Yantra RegistryErrorCode::ArtifactNotFound (0) propagated cleanly through Sutra AgentError" },
+    "check_5": { "passed": true, "details": "Rendered results-latency.svg (1421 bytes)" },
+    "check_6": { "passed": true, "details": "Source and CAS-served SHA-256 match (842978ba004006ac726e72b84d97b8bb6b6f14a4ddb23f5f41d94a0624ae3ef5)" },
+    "check_7": { "passed": true, "details": "Baseline=370.4 MB, Peak=744.9 MB, Post-teardown=392.3 MB" }
+  },
+  "darshana_available": true,
+  "exit_code": 0
+}

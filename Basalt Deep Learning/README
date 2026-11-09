@@ -1,0 +1,70 @@
+Basalt Deep Learning — C++20 Deep-Learning Framework
+====================================================
+
+Basalt Deep Learning is a portable C++20 deep-learning framework built on
+top of the Bellows machine-learning library.  It is licensed under the GNU
+General Public License version 3 or later (see `COPYING`).
+
+Basalt Deep Learning is an independent project; it is not part of the GNU
+Project, is not endorsed by or affiliated with the Free Software Foundation,
+and applies the GNU Coding Standards purely as a coding style, packaging,
+and documentation discipline.
+
+Overview
+--------
+
+Basalt Deep Learning provides:
+
+  * N-dimensional strided tensors (`basalt::Tensor`) with broadcasting,
+    multiple data types (`f16`, `bf16`, `f32`, `f64`, `i32`, `i64`, `u8`,
+    `bool`), and unified CPU (SIMD/BLAS) and runtime-loaded CUDA backends.
+  * Reverse-mode automatic differentiation over dynamic computation graphs,
+    including higher-order gradients (`create_graph`) and `no_grad` /
+    `enable_grad` scopes.
+  * Neural network modules (`basalt::nn`): `Linear`, `Conv1d`, `Conv2d`,
+    `Conv3d`, pooling (`Max_Pool`, `Avg_Pool`, `Adaptive_Avg_Pool`),
+    normalization (`Batch_Norm`, `Layer_Norm`, `Group_Norm`, `RMS_Norm`),
+    activations, `Multihead_Attention`, transformer encoder/decoder blocks,
+    `Embedding`, and `Dropout`.
+  * Optimizers (`SGD` with momentum and Nesterov, `Adam`, `AdamW`,
+    `RMSprop`, `Adagrad`, `LAMB`) and learning-rate schedulers (`Step_LR`,
+    `Cosine_Annealing_LR`, `One_Cycle_LR`, `Linear_Warmup_LR`,
+    `Reduce_LR_On_Plateau`).
+  * Numerically stable losses and evaluation metrics integrated with Bellows.
+  * Multi-threaded prefetching data pipeline (`Dataset`, `Transform`,
+    `Collate`, `Data_Loader`, and memory-mapped dataset readers).
+  * Mixed-precision training (`fp16`/`bf16`), gradient scaling, gradient
+    accumulation, and activation checkpointing.
+  * Versioned, self-describing checkpoints with backward-compatibility
+    guarantees, plus import and export of Safetensors and ONNX models.
+  * Lightning-style `basalt::Trainer` with callbacks, hooks, early stopping,
+    checkpoint resume, pluggable loggers, reproducible seeding, and
+    multi-device data-parallel training.
+  * Stable C ABI (`libbasalt-c`), command-line utilities (`basalt-train`,
+    `basalt-inspect`, `basalt-convert`), and optional `pybind11` Python
+    bindings (`basalt-dl` distribution, imported as `import basalt`).
+
+Building and Installing
+-----------------------
+
+Basalt Deep Learning uses GNU Autoconf, Automake, and Libtool:
+
+    ./configure
+    make
+    make check
+    make install
+
+You may specify `--with-bellows=DIR` and `--with-hyper-math=DIR` if Bellows
+and Hyper Math are not installed in standard system locations or sibling
+directories, and `--enable-python` to build the Python bindings.  See
+`INSTALL` for standard `configure` options.
+
+Documentation and Licensing
+---------------------------
+
+The complete reference manual is located in `doc/basalt-dl.texi` ("Basalt
+Deep Learning Reference Manual") and can be built in Info, HTML, PDF, or
+DVI formats via `make info`, `make html`, or `make dvi`.
+
+For copying and licensing terms, see `COPYING`.
+Bug reports should be sent to <Kival@basalt-dl.org>.

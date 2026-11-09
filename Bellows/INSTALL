@@ -1,0 +1,34 @@
+Installation Instructions for Bellows
+=====================================
+
+Copyright (C) 2026 Kival
+See the file COPYING for copying conditions.
+
+Basic Installation
+------------------
+
+Bellows provides both a top-level GNU-compatible `Makefile` and a
+`CMakeLists.txt` build configuration.
+
+To compile all libraries (`libbellows.a` and `libbellows.so`), command-line
+programs (`bellows`, `bellows-train`, `bellows-infer`), and the test suite
+(`bellows-check`):
+
+    make all
+
+To run the test suite and automated style checks:
+
+    make check
+
+To install the library, headers, pkg-config descriptor (`bellows.pc`), and
+executables (optionally specifying `PREFIX` and `DESTDIR`):
+
+    make install PREFIX=/usr/local
+
+To remove all compiled binaries and intermediate files:
+
+    make clean
+
+To package a source distribution tarball:
+
+    make dist

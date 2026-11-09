@@ -1,0 +1,149 @@
+## Antigravity Prompt — Darshana: C++23 Visualization & Experimentation Library (Production-Grade, Zero Python)
+
+**Context.** **Darshana** (Sanskrit: *seeing*, *vision*, and *philosophical inquiry*; the dual meaning is deliberate and reflects the library's two-in-one mandate) is a native C++23 library that serves as a high-performance rival to Matplotlib, Seaborn, Plotly, and Bokeh. It is a sibling library to **Surya** (CV) and **Sutra** (agents), and shares their Vedic naming family. The reference hardware is an Intel i7-12700K (AVX-512) and an NVIDIA RTX 3070 (8 GB VRAM). The entire stack must be C++—no Python wrappers, no pybind11, no runtime interpreter overhead.
+
+**Core Objective.** Build a visualization engine that structurally eliminates the performance pathologies of the Python incumbents (interpreter overhead, per-interaction full redraws, single-threaded rendering) while matching their functional surface. The primary architectural mandate is a **declarative specification layer** (renderer-agnostic plot description) feeding **multiple specialized backends**: a GPU-accelerated interactive backend and a CPU-optimized vector export backend. The name *Darshana* encodes the library's philosophical stance: a plot is not the data, it is a *way of seeing* the data — a disciplined act of interpretation, not a naive rendering.
+
+### 1. Architectural Mandate (Non-Negotiable)
+
+The library must be built around the following architectural pillars, derived from the convergence patterns and performance bottlenecks of the target frameworks:
+
+- **Declarative Specification Layer (Grammar of Graphics):** Plot definitions must be data, not imperative draw calls. Implement a `darshana::Spec` object (serializable to JSON) that describes the plot type, data mappings, scales, and aesthetics. This layer is renderer-agnostic, enabling the same spec to be rendered interactively (GPU) or exported to static formats (SVG, PDF). This mirrors the Vega-Lite grammar of graphics approach demonstrated by C++ libraries like XVega.
+- **GPU-Accelerated Interactive Backend (Vulkan):** The primary interactive renderer must be built on Vulkan 1.2+, not OpenGL. Vulkan provides explicit control over GPU resources, enabling predictable performance and efficient rendering of millions of data points. This is the architecture proven by Datoviz and Spectra, which achieve orders-of-magnitude performance gains over CPU-bound libraries. Implement anti-aliased lines, markers, and dash patterns entirely on the GPU using signed-distance fields (SDFs) and MSAA.
+- **CPU-Optimized Vector Export Backend:** For publication-quality output, implement a CPU-based backend that generates SVG and PDF directly, without routing through a Python interpreter or a heavyweight GUI framework. Use a production-ready C++ vector graphics engine like **ThorVG** as the rasterization/vectorization foundation, or implement a focused SVG generator. Benchmark CPU SVG rendering performance against established engines (ThorVG demonstrates ~1.8× faster CPU performance than alternatives).
+- **Dual Data Path: Streaming vs. Snapshot:** The API must distinguish between **streaming data** (live sensor feeds, training metrics) and **static snapshots** (a completed dataset for publication). The streaming path must use O(1) ring-buffer appends and support 60 fps updates with minimal allocation, as demonstrated by Spectra. The snapshot path optimizes for memory efficiency and export quality.
+- **Statistical Layer (Seaborn Rival):** Implement a `darshana::stat` namespace providing high-level statistical visualizations (distribution plots, regression plots, categorical plots, matrix plots) as compositions of the lower-level spec. These must be implemented natively in C++, not as wrappers around an external statistics library.
+
+### 2. Elimination of Python Framework Pathologies
+
+The Python frameworks exhibit systemic performance and architectural issues that Darshana must structurally prevent:
+
+- **Eliminate Interpreter Overhead:** Matplotlib-cpp embeds a Python interpreter, converts C++ data to Python/NumPy objects, and invokes Matplotlib via the Python C API. This adds per-call overhead that is unacceptable for real-time visualization. **Darshana must have zero runtime dependency on a Python interpreter.** All rendering logic must be native C++.
+- **Eliminate Full-Figure Redraws on Interaction:** Matplotlib redraws the entire figure from scratch for simple interactions like crosshairs or zooming, causing noticeable lag over heavy plots. **Darshana must implement a layered rendering architecture** where interactive overlays (crosshairs, tooltips, selection brushes) are rendered on separate GPU layers and composited without redrawing the static data layer.
+- **Eliminate Global State and Single-Threaded Rendering:** Matplotlib's global state (`pyplot`) makes concurrent plotting unsafe. **Darshana must be fully re-entrant.** Multiple `darshana::Figure` objects must be renderable concurrently from different threads without shared mutable state. The GPU backend must use multiple command buffers and be compatible with Vulkan's multi-threaded command recording.
+- **Eliminate Synchronous Export Blocking:** Exporting a plot to a file must not block the calling thread. **All export operations must be asynchronous**, returning a `std::future<darshana::ExportResult>` or accepting a completion callback. The export pipeline must not stall the interactive rendering loop.
+
+### 3. Performance Targets (Hard Requirements)
+
+These are non-negotiable benchmarks that Darshana must meet on the reference hardware (RTX 3070, i7-12700K). They are derived from the demonstrated capabilities of high-performance C++ visualization libraries.
+
+| Metric | Target | Justification |
+| :--- | :--- | :--- |
+| **Interactive Scatter Plot (10M points)** | **≥ 60 FPS** sustained | Datoviz renders a 10M-point scatter at 250 FPS; 60 FPS is the interactive floor. |
+| **Interactive Line Plot (1M points)** | **≥ 120 FPS** | Line rendering is simpler than scatter; the GPU should be substantially underutilized. |
+| **Frame-Time Consistency (Streaming)** | **< 1 ms jitter** at 60 Hz | Streaming data must not cause frame drops; use O(1) ring buffers and pre-allocated GPU buffers. |
+| **SVG Export (1M-point scatter)** | **< 2 seconds** on CPU | ThorVG achieves ~1.8× faster CPU rendering than comparable engines. |
+| **Cold-Start Latency** | **< 50 ms** to first interactive frame | Native C++ must not incur Python import overhead (~1.8 s for Matplotlib). |
+| **Memory Footprint (Idle)** | **< 30 MB** RSS | The Python incumbents start at ~158 MB; native C++ must be an order of magnitude leaner. |
+
+### 4. Memory Management (Hard Rules)
+
+- Ban raw `new`/`delete` in all Darshana library code. Use `std::unique_ptr` for exclusive ownership, `std::shared_ptr` only where ownership is genuinely shared, and `std::pmr` monotonic/arena resources for per-frame scratch memory (tessellation buffers, layout caches, text shaping intermediates).
+- GPU memory management must use a pool allocator built on Vulkan's memory allocation APIs. Never allocate GPU memory in the per-frame hot path. Pre-allocate all buffers required for the maximum expected data size and reuse them.
+- Every public API must have documented allocation behavior. Fallible APIs must return `std::expected<T, darshana::Error>` (C++23).
+- All resource acquisition must be RAII. Vulkan objects (devices, queues, command buffers, pipelines) must be wrapped in RAII handles with deterministic destruction.
+
+### 5. Concurrency & Asynchrony
+
+- Darshana must support N concurrent `Figure` renderings from different threads. There must be no global mutable state. Each `Figure` owns its Vulkan resources and command buffers.
+- Provide a `darshana::RenderLoop` abstraction that manages a dedicated rendering thread, a lock-free command queue for figure updates, and a completion queue for frame presentation. Users should not interact with raw Vulkan synchronization primitives.
+- Data uploads (CPU → GPU) must be asynchronous and must overlap with rendering. Use staging buffers and timeline semaphores to avoid pipeline stalls.
+- Darshana must compile cleanly under `-fsanitize=thread` (TSan) with zero race reports on the concurrent rendering test suite.
+
+### 6. Error Handling (C++23 `std::expected`)
+
+- All fallible public APIs must return `std::expected<T, darshana::Error>`.
+- `darshana::Error` must be a variant distinguishing: **GPU errors** (device loss, out-of-memory, pipeline creation failure), **Data errors** (invalid spec, unsupported data type, empty dataset), **Export errors** (format not supported, I/O failure), and **Framework errors** (invalid state, resource exhaustion).
+- Vulkan API calls must be wrapped in a `DARSHANA_VK_CHECK` macro that returns a typed error with the `VkResult` string. No silent failures.
+- Graceful degradation: if Vulkan device creation fails, fall back to the CPU SVG export backend with a logged warning. The API must never crash on GPU unavailability.
+
+### 7. Coding Standards (GNU Coding Standards — Style Only)
+
+The entire Darshana codebase must follow the **GNU coding standards** for all aspects of coding style. These apply **solely to coding standards**—formatting, naming, commenting, error messages, and code organization within a file—and do **not** mandate the GNU build system (Autotools), GNU project structure, or GNU licensing. The build system remains CMake as specified below.
+
+- **Formatting:** GNU-style indentation (2 spaces per level, braces on new lines), 79-column line limit, consistent spacing.
+- **Naming:** lower_case_with_underscores for variables and functions, UPPER_CASE for macros, CamelCase for types.
+- **Comments:** Every function must have a comment describing purpose, parameters, return value, and side effects. GNU-style comment blocks for file headers and function documentation.
+- **Error messages:** Complete sentences, start with a capital letter, no trailing period. Informative and actionable.
+- **Portability:** Avoid compiler-specific extensions; guard with feature test macros.
+- **Consistency:** The agent must run `clang-format --dry-run --Werror` with a GNU-compatible configuration as part of the verification loop.
+
+### 8. Testing & Autonomous Bug Detection (Antigravity's Continuous Verification Loop)
+
+**8.1. Unit & Integration Tests**
+- Every public Darshana API must have unit tests covering success paths, error paths (invalid spec, empty dataset, GPU device loss), and boundary conditions.
+- Integration tests must cover: a full plot lifecycle (spec creation → data binding → render → export); concurrent rendering of multiple figures; streaming updates at 60 Hz.
+
+**8.2. Property-Based Tests**
+- Spec serialization: for any valid `darshana::Spec`, JSON round-trip must produce an equivalent object.
+- Scale mapping: for any data range and scale type (linear, log, categorical), the mapped coordinates must be monotonically increasing (or decreasing) and within the viewport bounds.
+- Memory tier isolation: rendering one figure must never mutate another figure's spec or data.
+
+**8.3. Golden Image Tests**
+- A suite of reference plots must be rendered and compared pixel-by-pixel (with tolerance) against stored golden images. This catches regressions in anti-aliasing, line joins, text layout, and color mapping. Spectra maintains 50+ golden image tests; Darshana must match this discipline.
+
+**8.4. Performance Regression Tests**
+- **Frame-Time Benchmark:** A 10M-point scatter plot must sustain ≥ 60 FPS for 1,000 consecutive frames. Frame-time jitter must be < 1 ms.
+- **Export Benchmark:** A 1M-point SVG export must complete in < 2 seconds on the reference CPU.
+- **Memory Benchmark:** Peak GPU memory usage for a 10M-point plot must be measured and must not exceed a documented budget (e.g., < 2 GB on an 8 GB card).
+
+**8.5. Stress & Leak Tests**
+- **10,000 sequential figure creations and destructions** with no memory growth (validate with ASan/LSan and a GPU memory delta check).
+- **100 concurrent figure renderings** across 8 threads with no deadlocks, no data races (TSan), and no GPU memory leaks.
+- **Long-running streaming test:** 1 hour of 60 Hz updates with no memory growth and no frame-rate degradation.
+
+**8.6. Autonomous Bug-Hunting Protocol (Antigravity's Mandate)**
+- After generating any Darshana module, Antigravity must immediately run: `cmake --build --preset release-asan`, `ctest`, `clang-tidy` with `cppcoreguidelines-*` and `modernize-*`, `clang-format --dry-run --Werror` with GNU configuration, and `-fsanitize=thread`.
+- If any check fails, Antigravity must diagnose the root cause before applying a fix, and must re-run the full suite.
+- Antigravity must maintain `KNOWN_ISSUES.md` logging every bug found and fixed.
+- Antigravity must not mark any task "complete" if the test suite has any failing test, any ASan/TSan report, any clang-tidy warning, or any GNU style violation.
+
+### 9. Build & Packaging
+
+- CMake ≥ 3.28, Ninja generator, C++23 (`-std=c++23`, GCC 13+ or Clang 17+).
+- `CMakePresets.json` with: `debug`, `release`, `release-asan`, `release-tsan`, `release-vulkan`, `release-headless` (SVG-only, no GPU dependency).
+- **Zero third-party dependencies in public headers** except the C++ standard library. Vulkan is a build dependency for the interactive backend; the CPU export backend must be buildable without Vulkan. Wrap Vulkan types in opaque handles (`darshana::GpuDevice`, `darshana::GpuBuffer`) defined in the public header.
+- Install target must export a CMake config package **`DarshanaConfig.cmake`** with optional `find_dependency(Vulkan)`.
+- Version the ABI from day one using inline namespaces (**`namespace darshana::v1`**).
+- Target name: **`Darshana::Darshana`**.
+
+### 10. Observability
+
+- Structured logging via a pluggable sink (default: stderr, JSON-lines). No `std::cout`, `printf`, or `std::endl`.
+- Per-frame timing counters (CPU prep, GPU upload, GPU draw, present) exposed through a `darshana::FrameStats` object. Zero-cost when disabled.
+- A public `darshana::Profiler` hook for Tracy/Perfetto/RenderDoc integration without recompilation.
+
+### 11. Documentation
+
+- Every public Darshana symbol must have a Doxygen comment with `@pre`, `@post`, `@returns`, and thread-safety notes.
+- **`PRODUCTION.md`** : hardware requirements (Vulkan-capable GPU), memory budgeting, concurrency model, error taxonomy, and reproduction steps for all benchmarks.
+- **`BENCHMARKS.md`** : a direct comparison table against the Python frameworks' published performance numbers, including: 10M-point scatter FPS (Darshana target ≥ 60 vs. Matplotlib interactive lag), 1M-point SVG export time (Darshana target < 2 s), and cold-start latency (Darshana target < 50 ms vs. Python ~1800 ms).
+- **`README.md`** : one-paragraph pitch, the *Darshana* naming rationale (the dual meaning of *seeing* and *philosophical inquiry* mirrors the library's dual mandate of visualization and experimentation), and a 10-line quick-start example using the declarative spec API.
+
+### 12. Definition of Done
+
+1. All tests pass under `release-asan` and `release-tsan` with zero reports.
+2. **A 10M-point scatter plot sustains ≥ 60 FPS** for 1,000 consecutive frames with < 1 ms jitter, measured by the dedicated benchmark.
+3. **A 1M-point SVG export completes in < 2 seconds** on the reference CPU.
+4. **Cold-start to first interactive frame is < 50 ms**, measured from process launch.
+5. The golden image test suite passes with zero regressions.
+6. `clang-tidy` passes with `cppcoreguidelines-*` and `modernize-*` clean, and `clang-format --dry-run --Werror` with GNU configuration reports zero violations.
+7. `KNOWN_ISSUES.md` exists and documents the bug-hunting history.
+8. `PRODUCTION.md` and `BENCHMARKS.md` exist and match reality on the reference hardware.
+9. A fresh clone builds with `cmake --preset release-vulkan && cmake --build --preset release-vulkan` on a clean machine with no manual steps.
+10. `DarshanaConfig.cmake` is installed and a downstream consumer can link against `Darshana::Darshana` with a one-line `target_link_libraries`.
+
+### 13. Anti-Patterns (Must Be Absent)
+
+- Any embedded Python interpreter, any `.py` file, any Python-generated code.
+- Full-figure redraws triggered by interactive overlays (crosshairs, tooltips).
+- Global mutable state; concurrent rendering must be safe.
+- Synchronous export operations that block the rendering loop.
+- GPU memory allocation in the per-frame hot path.
+- `std::cout`, `printf`, `cout`, `std::endl` in Darshana library code.
+- `new`/`delete` outside allocator implementations.
+- Public APIs that can throw across the ABI boundary.
+- Violations of GNU coding style (inconsistent indentation, non-GNU naming, missing function comments).
+- Any naming inconsistency with the `darshana` / `darshana::v1` / `Darshana::Darshana` / `DarshanaConfig.cmake` conventions.
+
+---

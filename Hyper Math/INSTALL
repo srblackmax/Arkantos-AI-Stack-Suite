@@ -1,0 +1,38 @@
+Installation Instructions for Hyper Math
+========================================
+
+Copyright (C) 2026 Kival
+
+Basic Installation
+------------------
+
+Hyper Math adheres to the GNU Coding Standards and can be built and installed
+using either GNU Make directly or CMake.
+
+1. Building with GNU Make (Recommended):
+
+     make
+     make check
+     make install PREFIX=/usr/local
+
+   Standard GNU Make directory variables are honored:
+     - `prefix`      (default: `/usr/local`)
+     - `exec_prefix` (default: `$(prefix)`)
+     - `bindir`      (default: `$(exec_prefix)/bin`)
+     - `libdir`      (default: `$(exec_prefix)/lib`)
+     - `includedir`  (default: `$(prefix)/include`)
+     - `DESTDIR`     (staging root directory for packaged installs)
+
+2. Building with CMake:
+
+     mkdir -p build && cd build
+     cmake .. -DCMAKE_BUILD_TYPE=Release
+     cmake --build .
+     ctest --output-on-failure
+     cmake --install . --prefix /usr/local
+
+Compiler Requirements
+---------------------
+
+Hyper Math requires a C++20 compliant compiler (such as GCC >= 11 or Clang >= 14)
+and relies on zero external third-party libraries.

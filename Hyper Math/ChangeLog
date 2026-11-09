@@ -1,0 +1,256 @@
+2026-10-31  Kival  <Kival@hypermath.org>
+
+	* include/hyper_math/core/prng.hpp (random_engine::get_state,
+	random_engine::set_state): Add public state snapshot and restore
+	methods so downstream consumers do not need strict-aliasing workarounds.
+	* include/hyper_math/core/parallel.hpp (thread_pool::thread_pool,
+	parallel_for): Cap default worker thread count to 8 P-cores on hybrid
+	CPUs and capture exceptions inside the OpenMP parallel_for region to
+	rethrow after the barrier instead of calling std::terminate.
+	* include/hyper_math/tensor/reductions.hpp (matmul): Add 4-row
+	register-blocked microkernel for 2D matrix multiplication.
+
+2026-10-30  Kival  <Kival@hypermath.org>
+
+	* include/hyper_math/core/constants.hpp: Add CODATA 2022 physical &
+	SI prefix constants and convert_temperature.
+	* include/hyper_math/core/random.hpp: Add random_binomial,
+	random_poisson, random_gamma, random_beta, random_weibull,
+	random_chisquare, random_student_t, random_f, random_dirichlet,
+	random_multinomial, random_multivariate_normal, and random_choice.
+	* include/hyper_math/tensor/ufunc.hpp,
+	include/hyper_math/tensor/reductions.hpp,
+	include/hyper_math/tensor/manipulation.hpp,
+	include/hyper_math/tensor/linalg_basic.hpp,
+	include/hyper_math/tensor/io.hpp: Complete Phases 16-20 NumPy parity
+	(gcd, lcm, i0, real_if_close, piecewise, array_equal, array_equiv,
+	quantile, nanquantile, vdot, inner, multi_dot, einsum_path, polydiv,
+	poly, histogramdd, sliding_window_view, save_npz, load_npz).
+	* include/hyper_math/scientific/linalg.hpp,
+	include/hyper_math/scientific/fft.hpp,
+	include/hyper_math/scientific/integrate.hpp,
+	include/hyper_math/scientific/optimize.hpp,
+	include/hyper_math/scientific/stats.hpp,
+	include/hyper_math/scientific/interpolate.hpp,
+	include/hyper_math/scientific/signal.hpp,
+	include/hyper_math/scientific/sparse.hpp,
+	include/hyper_math/scientific/spatial.hpp,
+	include/hyper_math/scientific/cluster.hpp: Complete Phases 16-20 SciPy
+	parity (rsf2csf, qz, rq, qr_pivoted, solve_banded, cholesky_banded,
+	expm_frechet, fractional_matrix_power, funm, 1D/2D/N-D FFT/RFFT/HFFT/
+	DCT/DST/FHT, tplquad, nquad, quad_vec, tanhsinh, RK23, DOP853, Radau,
+	BDF, solve_bvp, Powell, CG, Newton-CG, Dogleg, Trust-NCG, SLSQP, NNLS,
+	lsq_linear, MILP, Differential Evolution, Basin-Hopping, SHGO, DIRECT,
+	quadratic_assignment, complete special functions, 22 distributions,
+	QMC Halton/Sobol/LHS/Poisson-disk, bootstrap/permutation_test,
+	B-splines, Akima, Hermite, 3D grid interpolation, Chebyshev/Elliptic/
+	Bessel IIR filters, SOS filters, STFT/ISTFT/CZT/Lomb-Scargle, LTI
+	systems, CSC/COO/DIA/BSR/DOK/LIL sparse formats, MINRES/LSQR/LU/ILU/
+	eigsh/svds, csgraph algorithms, Voronoi/Spherical Voronoi/Halfspace/
+	Polygon clipping, 3D rotation & rigid_transform, OPTICS, optimal leaf
+	ordering).
+	* include/hyper_math/tabular/series.hpp,
+	include/hyper_math/tabular/data_frame.hpp,
+	include/hyper_math/tabular/lazy.hpp: Complete Phases 16-20 Pandas &
+	Polars parity (.str regex/hex/base64/JSON, .dt strftime/epoch/business
+	days, rolling_apply, rolling_corr, query, eval_expr, sql_query,
+	sql_context, group_by_dynamic, upsample, partition_by, JSON/HTML I/O).
+	* include/hyper_math/hyper_math_c.h, src/libhypermath.cpp,
+	src/main.cpp, benchmarks/bench_main.cpp: Expand C ABI, CLI --eval/REPL
+	commands, and performance benchmark suite.
+	* include/hyper_math/tensor/ufunc.hpp: Add logaddexp2, signbit,
+	floor_divide, remainder, nextafter, ldexp, frexp, modf, divmod,
+	reciprocal, square, positive, negative, asinh, acosh, atanh, rint,
+	and spacing.
+	* include/hyper_math/tensor/reductions.hpp: Add ptp, trapz, average,
+	cross_3d, nancumsum, nancumprod, and nanptp.
+	* include/hyper_math/tensor/manipulation.hpp: Add block_2d,
+	tril_indices, triu_indices, diag_indices, rollaxis, trim_zeros,
+	delete_elements, insert_elements, append_elements, histogram2d, and
+	setxor1d.
+	* include/hyper_math/scientific/linalg.hpp: Add lu (PLU), ldl (LDL^T),
+	solve_discrete_lyapunov, solve_discrete_are, solve_continuous_are,
+	khatri_rao, leslie, fiedler, pascal, invpascal, helmert, cosm, sinm,
+	hessenberg, and 2D multi-RHS lstsq.
+	* include/hyper_math/scientific/fft.hpp: Add dct2 and idct2.
+	* include/hyper_math/scientific/integrate.hpp: Add romb for sampled
+	uniform arrays.
+	* include/hyper_math/scientific/signal.hpp: Add tukey_window, upfirdn,
+	spectrogram, chirp, csd, coherence, sawtooth, and square_wave.
+	* include/hyper_math/scientific/interpolate.hpp: Add analytical
+	cubic_spline::integrate and vectorized cubic_spline::derivative.
+	* include/hyper_math/scientific/stats.hpp: Add wasserstein_distance,
+	energy_distance, multivariate_normal_dist, boxcox, yeojohnson,
+	binom_test, jarque_bera, levene, sem, special::i0, special::i1, and
+	bartlett_test.
+	* include/hyper_math/tabular/series.hpp: Add expanding_sum,
+	expanding_min, expanding_max, expanding_var, expanding_std,
+	rolling_quantile, rolling_median, ewm_var, ewm_std, sem, mad, hasnans,
+	sqrt, log, exp, sin, cos, and tan.
+	* include/hyper_math/tabular/data_frame.hpp: Add add_prefix,
+	add_suffix, select_dtypes, pop, assign, insert_column, where_cond, and
+	mask_cond.
+	* include/hyper_math/tabular/lazy.hpp: Add fill_forward,
+	fill_backward, clip, sqrt, log, exp, sin, cos, and tan expressions.
+	* include/hyper_math/hyper_math_c.h, src/libhypermath.cpp: Add C ABI
+	functions hm_linalg_pinv, hm_linalg_lstsq, hm_linalg_expm,
+	hm_tensor_save_npy, hm_tensor_load_npy,
+	hm_optimize_linear_sum_assignment, hm_dataframe_read_hmb, and
+	hm_dataframe_write_hmb.
+	* include/hyper_math/tensor/reductions.hpp: Add nanargmin and
+	nanargmax.
+	* include/hyper_math/tensor/manipulation.hpp: Add squeeze,
+	expand_dims, swapaxes, moveaxis, atleast_1d, atleast_2d, atleast_3d,
+	broadcast_to, interp, unravel_index, ravel_multi_index, diagflat,
+	fill_diagonal, and tri.
+	* include/hyper_math/tensor/ufunc.hpp: Add exp2, logaddexp, and
+	heaviside.
+	* include/hyper_math/scientific/linalg.hpp: Add eigh_generalized,
+	companion, and hadamard.
+	* include/hyper_math/scientific/integrate.hpp: Add dblquad, leggauss,
+	and fixed_quad.
+	* include/hyper_math/scientific/optimize.hpp: Add fsolve and
+	linear_sum_assignment (Hungarian bipartite matching).
+	* include/hyper_math/scientific/stats.hpp: Add digamma, erfinv, binom,
+	uniform_dist, lognormal_dist, median_abs_deviation, wilcoxon, and
+	friedmanchisquare.
+	* include/hyper_math/scientific/interpolate.hpp: Add
+	regular_grid_interpolator_2d.
+	* include/hyper_math/scientific/spatial.hpp: Add Bowyer-Watson 2D
+	Delaunay triangulation (delaunay_2d).
+	* include/hyper_math/scientific/cluster.hpp: Add dbscan density-based
+	clustering.
+	* include/hyper_math/tabular/series.hpp: Add mode, arg_min, arg_max,
+	idxmin, idxmax, map_numeric, dt_day_of_week, dt_day_of_year,
+	rolling_var, and expanding_mean.
+	* include/hyper_math/tabular/data_frame.hpp: Add combine_first and
+	value_counts.
+	* include/hyper_math/tabular/lazy.hpp: Add is_null, is_not_null,
+	coalesce, lazy_frame::slice, and lazy_frame::unique.
+	* include/hyper_math/tensor/manipulation.hpp: Add polyadd, polysub,
+	polymul, polyder, polyint, geomspace, bartlett, kaiser, and
+	flatnonzero.
+	* include/hyper_math/scientific/signal.hpp: Add detrend, medfilt,
+	hilbert_analytic, envelope, and resample.
+	* include/hyper_math/scientific/spatial.hpp: Add directed_hausdorff,
+	hausdorff_distance, and orthogonal procrustes shape analysis.
+	* include/hyper_math/tabular/series.hpp: Add lag-k autocorr.
+	* include/hyper_math/tabular/data_frame.hpp: Add get_dummies one-hot
+	categorical encoder.
+	* include/hyper_math/tensor/ufunc.hpp: Add isclose, sinc, deg2rad,
+	rad2deg, copysign, and fmod.
+	* include/hyper_math/tensor/manipulation.hpp: Add ediff1d,
+	intersect1d, union1d, setdiff1d, and isin.
+	* include/hyper_math/scientific/linalg.hpp: Add solve_triangular,
+	orth, null_space, sqrtm, and logm_spd.
+	* include/hyper_math/scientific/sparse.hpp: Add sparse_eye and
+	gmres_solve (Arnoldi Krylov subspace solver).
+	* include/hyper_math/scientific/stats.hpp: Add entropy,
+	kl_divergence, iqr, trim_mean, gmean, hmean, and kruskal.
+	* include/hyper_math/tabular/series.hpp: Add str_starts_with,
+	str_ends_with, str_strip, and between.
+	* include/hyper_math/tabular/data_frame.hpp: Add explode_delimited.
+	* include/hyper_math/tensor/manipulation.hpp: Add take, compress,
+	extract, nan_to_num, unwrap, and multi-key lexsort.
+	* include/hyper_math/scientific/interpolate.hpp: Add monotonicity-
+	preserving pchip_interpolator, barycentric_interpolator, and N-D
+	rbf_interpolator.
+	* include/hyper_math/scientific/integrate.hpp: Add Richardson-
+	extrapolated romberg quadrature and cumulative_trapezoid.
+	* include/hyper_math/scientific/optimize.hpp: Add dual_annealing
+	global optimizer with L-BFGS-B local polishing.
+	* include/hyper_math/tabular/series.hpp: Add cum_prod, cum_min,
+	cum_max, diff, pct_change, unique, and nunique.
+	* include/hyper_math/tabular/data_frame.hpp: Add nlargest, nsmallest,
+	and rename.
+	* include/hyper_math/tabular/lazy.hpp: Add cum_prod, cum_min, cum_max,
+	diff, pct_change expressions and top_k / bottom_k lazy operators.
+	* include/hyper_math/scientific/autograd.hpp: New file. Implement
+	forward-mode dual numbers (dual_number, derivative, forward_grad,
+	jacobian) and reverse-mode Wengert computation tape (tape, var,
+	value_and_grad, grad, hessian, minimize_bfgs_autograd).
+	* include/hyper_math/tensor/reductions.hpp: Add L1/L2 cache-tiled and
+	SIMD-vectorizable contiguous fast path for 2D matmul and dot.
+	* include/hyper_math/tensor/nd_tensor.hpp: Add multi-threaded
+	materialization fast path for large lazy ufunc expressions.
+	* src/main.cpp: Add interactive REPL shell (--repl) and extended
+	--eval commands (stats, grad, quad).
+	* Makefile: Add shared library, pkg-config, and man page installation
+	plus distcheck target.
+	* include/hyper_math/tensor/manipulation.hpp: New file. Implement
+	meshgrid, repeat, tile, pad ("constant", "edge", "wrap", "reflect"),
+	flip, fliplr, flipud, roll, rot90, tril, triu, vander, nonzero,
+	searchsorted, bincount, histogram, gradient, cov, corrcoef, polyfit,
+	and polyval.
+	* include/hyper_math/scientific/spatial.hpp: New file. Implement cdist,
+	pdist, squareform, 2D Convex Hull (Andrew's monotone chain), and
+	clean-room k-d Tree (kd_tree) with k-NN and radius ball queries.
+	* include/hyper_math/scientific/cluster.hpp: New file. Implement
+	k-Means++ clustering (kmeans2) and agglomerative hierarchical
+	clustering (linkage supporting single, complete, average, and ward).
+	* include/hyper_math/scientific/linalg.hpp: Add Padé (6,6) scaling and
+	squaring matrix exponential (expm), slogdet, cond, toeplitz, circulant,
+	hilbert, and block_diag.
+	* include/hyper_math/scientific/fft.hpp: Add Type-II/III Discrete
+	Cosine Transform (dct, idct) and fast FFT convolution (convolve_fft).
+	* include/hyper_math/scientific/stats.hpp: Add Bessel (jv, j0, j1),
+	Legendre (eval_legendre), and Chebyshev (eval_chebyt) functions, plus
+	ks_1samp, ks_2samp, f_oneway (ANOVA), chisquare, and mannwhitneyu.
+	* include/hyper_math/scientific/sparse.hpp: Add spmm and BiCGSTAB
+	non-symmetric sparse iterative solver (bicgstab_solve).
+	* include/hyper_math/tabular/series.hpp: Add linear null interpolation
+	(interpolate), shift, cum_sum, rolling_min, rolling_max, rolling_std,
+	value_counts, is_in, str_to_lowercase, str_lengths, and str_replace.
+	* include/hyper_math/tabular/data_frame.hpp: Add drop_duplicates,
+	sample, corr, concat_rows, and Hyper Math Binary (.hmb) columnar
+	serialization (write_hmb, read_hmb).
+	* include/hyper_math/tabular/lazy.hpp: Add Polars-style window
+	expressions (over) and lazy joins (lazy_frame::join).
+	* COPYING: Add GNU General Public License Version 3.
+	* Makefile: Implement GNU Coding Standards compliant build targets
+	(all, check, install, uninstall, clean, distclean, dist).
+	* CMakeLists.txt: Add CMake build configuration with GNUInstallDirs.
+	* include/hyper_math/core/config.hpp: New file. Define version macros,
+	GNU compiler attributes, and diagnostic exception hierarchy.
+	* include/hyper_math/core/memory.hpp: New file. Implement 64-byte
+	cache-line aligned reference-counted slab allocator.
+	* include/hyper_math/core/bitmask.hpp: New file. Implement 64-bit word
+	validity bitmap with hardware popcount operations.
+	* include/hyper_math/core/prng.hpp: New file. Implement xoshiro256**
+	and Box-Muller normal generator.
+	* include/hyper_math/tensor/lattice.hpp: New file. Implement rank-agnostic
+	affine stride lattice descriptor and N-D broadcast resolver.
+	* include/hyper_math/tensor/nd_tensor.hpp: New file. Implement N-D tensor
+	container, views, slicing, and creation routines.
+	* include/hyper_math/tensor/ufunc.hpp: New file. Implement lazy expression
+	templates and universal mathematical functions.
+	* include/hyper_math/tensor/reductions.hpp: New file. Implement reductions,
+	matrix multiplication, and generalized Einstein summation (einsum).
+	* include/hyper_math/scientific/linalg.hpp: New file. Implement LU, QR,
+	Cholesky, Jacobi/QR eigensolvers, SVD, pinv, and lstsq.
+	* include/hyper_math/scientific/fft.hpp: New file. Implement Cooley-Tukey
+	and Bluestein arbitrary-length 1D/2D FFT and IFFT.
+	* include/hyper_math/scientific/integrate.hpp: New file. Implement
+	Gauss-Kronrod G7-K15 quadrature and Dormand-Prince RK4(5) ODE solver.
+	* include/hyper_math/scientific/optimize.hpp: New file. Implement Brent,
+	Golden-Section, BFGS, Nelder-Mead, and Levenberg-Marquardt optimizers.
+	* include/hyper_math/scientific/stats.hpp: New file. Implement special
+	functions, probability distributions, and statistical hypothesis tests.
+	* include/hyper_math/scientific/interpolate.hpp: New file. Implement
+	natural/clamped cubic splines, Akima, and linear interpolators.
+	* include/hyper_math/scientific/signal.hpp: New file. Implement 1D
+	convolution, spectral windows, peak detection, and Savitzky-Golay filter.
+	* include/hyper_math/scientific/sparse.hpp: New file. Implement CSR sparse
+	matrix and Conjugate Gradient iterative solver.
+	* include/hyper_math/tabular/index.hpp: New file. Implement bi-directional
+	hash-indexed axis labels for Pandas-style alignment.
+	* include/hyper_math/tabular/series.hpp: New file. Implement dual-bitmask
+	columnar series with rolling/EWM windows and string dictionary storage.
+	* include/hyper_math/tabular/data_frame.hpp: New file. Implement columnar
+	DataFrame with loc/iloc, joins, group_by, pivot, melt, and CSV I/O.
+	* include/hyper_math/tabular/lazy.hpp: New file. Implement Polars-style
+	expression AST, query optimizer (predicate & projection pushdown), and
+	physical execution engine.
+	* src/libhypermath.cpp: New file. Compile shared/static library entry points.
+	* src/main.cpp: New file. Implement GNU CLI utility (`hyper-math`).
+	* tests/: Add unit test suite covering tensor, scientific, and tabular modules.

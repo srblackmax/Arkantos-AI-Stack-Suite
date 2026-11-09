@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StackIntegrationResults",
+  "description": "Schema for stack-integration-results.json emitted by stack_integration_test",
+  "type": "object",
+  "required": [
+    "hardware",
+    "model",
+    "turns",
+    "aggregate",
+    "composability",
+    "darshana_available",
+    "exit_code"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "hardware": {
+      "type": "object",
+      "required": ["cpu", "gpu", "kernel", "ram", "disk"],
+      "additionalProperties": false,
+      "properties": {
+        "cpu": { "type": "string", "minLength": 1 },
+        "gpu": { "type": "string", "minLength": 1 },
+        "kernel": { "type": "string", "minLength": 1 },
+        "ram": { "type": "string", "minLength": 1 },
+        "disk": { "type": "string", "minLength": 1 }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": ["path", "sha256", "size_bytes", "registry_version"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": { "type": "integer", "minimum": 1 },
+        "registry_version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "turns": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "prompt",
+          "response_length",
+          "ttft_ms",
+          "total_ms",
+          "tokens",
+          "tokens_per_sec"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "category": { "type": "string", "minLength": 1 },
+          "prompt": { "type": "string", "minLength": 1 },
+          "response_length": { "type": "integer", "minimum": 1 },
+          "ttft_ms": { "type": "number", "minimum": 0 },
+          "total_ms": { "type": "number", "minimum": 0 },
+          "tokens": { "type": "integer", "minimum": 1 },
+          "tokens_per_sec": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "required": ["ttft_ms", "total_ms", "tok_per_s"],
+      "additionalProperties": false,
+      "properties": {
+        "ttft_ms": {
+          "type": "object",
+          "required": ["p50", "p99"],
+          "additionalProperties": false,
+          "properties": {
+            "p50": { "type": "number", "minimum": 0 },
+            "p99": { "type": "number", "minimum": 0 }
+          }
+        },
+        "total_ms": {
+          "type": "object",
+          "required": ["p50", "p99"],
+          "additionalProperties": false,
+          "properties": {
+            "p50": { "type": "number", "minimum": 0 },
+            "p99": { "type": "number", "minimum": 0 }
+          }
+        },
+        "tok_per_s": {
+          "type": "object",
+          "required": ["p50", "p99"],
+          "additionalProperties": false,
+          "properties": {
+            "p50": { "type": "number", "minimum": 0 },
+            "p99": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "composability": {
+      "type": "object",
+      "required": [
+        "check_1",
+        "check_2",
+        "check_3",
+        "check_4",
+        "check_5",
+        "check_6",
+        "check_7"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "check_1": { "$ref": "#/$defs/checkResult" },
+        "check_2": { "$ref": "#/$defs/checkResult" },
+        "check_3": { "$ref": "#/$defs/checkResult" },
+        "check_4": { "$ref": "#/$defs/checkResult" },
+        "check_5": { "$ref": "#/$defs/checkResult" },
+        "check_6": { "$ref": "#/$defs/checkResult" },
+        "check_7": { "$ref": "#/$defs/checkResult" }
+      }
+    },
+    "darshana_available": { "type": "boolean" },
+    "exit_code": { "type": "integer", "enum": [0, 1, 2, 3, 4] }
+  },
+  "$defs": {
+    "checkResult": {
+      "type": "object",
+      "required": ["passed", "details"],
+      "additionalProperties": false,
+      "properties": {
+        "passed": { "type": "boolean" },
+        "details": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

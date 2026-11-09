@@ -1,0 +1,6 @@
+---
+Checks: '-*,cppcoreguidelines-*,modernize-*,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-owning-memory,-cppcoreguidelines-macro-usage,-cppcoreguidelines-avoid-do-while,-cppcoreguidelines-avoid-c-arrays,-modernize-avoid-c-arrays,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-modernize-use-auto,-modernize-raw-string-literal,-modernize-return-braced-init-list,-cppcoreguidelines-avoid-non-const-global-variables'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/darshana/.*|src/.*'
+FormatStyle: file
+...

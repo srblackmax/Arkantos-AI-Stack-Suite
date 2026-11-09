@@ -1,0 +1,72 @@
+================================================================================
+SPHINX — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Application & Library: Sphinx Personal AI Voice + Text Assistant (Layer 10)
+Location: $HOME/AI/Arkantos/Sphinx
+Dependencies:
+  - Installed in ~/.local: Sutra, Vach, Yantra, Darshana (and lower stack layers)
+  - llama.cpp shared library at $HOME/llama.cpp/build/bin/libllama.so
+  - Models in $HOME/models/:
+      * Qwen3-30B-A3B-Q4_K_M.gguf           (Sparse MoE Task model, n_cpu_moe = 32)
+      * gemma-4-31B-it-Q4_K_M.gguf          (Dense 31B Task model, n_gpu_layers = 17, Q8_0 KV)
+      * Qwen2.5-1.5B-Instruct-Q4_K_M.gguf   (Router & Chat model)
+      * Qwen3-Embedding-0.6B-Q8_0.gguf      (CPU cross-session memory embeddings)
+      * ggml-base.en.bin                    (Whisper STT model)
+      * en_US-bryce-medium.onnx + .json     (Piper TTS voice model)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Sphinx"
+  cmake --preset release
+  cmake --build build/release -j$(nproc)
+
+2. INSTALL TO ~/.local
+----------------------
+  cmake --install build/release --prefix "$HOME/.local"
+
+  # Installed artifacts:
+  #   ~/.local/bin/sphinx          (CLI executable)
+  #   ~/.local/lib/libsphinx.so    (Shared library)
+  #   ~/.local/include/sphinx/*.hpp (Public C++23 headers)
+
+3. RUN TEST SUITE
+-----------------
+  # Fast unit, property, stress, and GNU style checks (~2.5 seconds):
+  ctest --test-dir build/release -E test_integration --output-on-failure
+
+  # Full test suite including end-to-end 30B model integration (~2 minutes):
+  ctest --test-dir build/release --output-on-failure
+
+4. RUN ALIVENESS & LATENCY BENCHMARK SUITE
+------------------------------------------
+  ./build/release/sphinx_bench --idle-ms 5000 --headless \
+    --json-out build/release/bench_results.json
+
+5. RUN SPHINX FROM THE COMMAND LINE
+-----------------------------------
+  # Live Voice + Text Mode (ALSA microphone + Piper TTS + keyboard input):
+  ~/.local/bin/sphinx
+
+  # Interactive Text-Only Mode (no microphone or speaker required):
+  ~/.local/bin/sphinx --text --headless
+
+  # Single-Shot Non-Interactive Prompt (Default Qwen3-30B-A3B Sparse MoE):
+  ~/.local/bin/sphinx --prompt "What operating system am I running?" --headless
+
+  # Run with Gemma 4 31B (Hybrid Dense Layer-Split Offloading):
+  ~/.local/bin/sphinx --big-model gemma-4-31b-it-q4km \
+    --big-gpu-layers 17 --big-cpu-moe 0 --text --headless
+
+  # Optional diagnostic environment variables:
+  SPHINX_DEBUG_TOOLS=1 SPHINX_DEBUG_MEMORY=1 ~/.local/bin/sphinx --text --headless
+
+6. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release           : Optimized Release build (build/release)
+  - debug             : Debug build with symbols (build/debug)
+  - release-asan      : Release + AddressSanitizer & UBSan (build/release-asan)
+  - release-tsan      : Release + ThreadSanitizer (build/release-tsan)
+  - release-cuda      : Release with CUDA enabled (build/release-cuda)
+  - release-headless  : Release with headless audio loopback default (build/release-headless)

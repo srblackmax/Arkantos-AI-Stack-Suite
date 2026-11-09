@@ -1,0 +1,9 @@
+Authors of Hyper Math
+=====================
+
+Hyper Math was designed and engineered as a clean-room C++20 mathematical,
+scientific, and relational columnar computing library under the GNU Coding
+Standards and licensed under the GNU General Public License v3.0 or later.
+
+Principal Engineering & Architecture:
+  * Kival & Contributors (Hyper Math Project)

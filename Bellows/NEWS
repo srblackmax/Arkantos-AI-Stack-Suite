@@ -1,0 +1,29 @@
+Bellows NEWS — History of user-visible changes.
+
+Copyright (C) 2026 Kival
+See the file COPYING for copying conditions.
+
+Version 0.1.0 (2026-10-31)
+
+  * Initial release of Bellows.
+  * C++20 concept lattice (`tabular_source`, `estimator`,
+    `supervised_fittable`, `unsupervised_fittable`, `predictor`,
+    `belief_predictor`, `transformer`, `categorical_aware`,
+    `missing_aware`, `tunable`, `serialisable`).
+  * Unified `stagewise_booster` supporting exact and quantile-bin cuts,
+    depth-synchronous, best-gain-frontier, and oblivious-symmetric tree
+    growth, gradient-magnitude row filtering, ordered categorical
+    statistics, and native missing-value routing.
+  * Preprocessing transformers: `moment_normaliser`, `interval_rescaler`,
+    `column_mender`, `indicator_expander`, `ordered_target_encoder`,
+    `quantile_bucketer`, `dispersion_filter`, and `relevance_selector`.
+  * Classical estimators: `penalised_linear_regressor`,
+    `penalised_logistic_classifier`, `proximity_learner`,
+    `gaussian_density_classifier`, `centroid_partitioner`, and
+    `subspace_tree_ensemble`.
+  * Composition and validation: `composite_chain` (`operator|`),
+    `dynamic_chain`, `fold_splitter`, `stratified_splitter`,
+    `cross_validate`, `parameter_sweep`, and composable evaluation
+    metrics.
+  * Versioned binary artefact serialisation and CLI tools (`bellows`,
+    `bellows-train`, `bellows-infer`, `bellows-check`).

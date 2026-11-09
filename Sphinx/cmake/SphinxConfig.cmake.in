@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Sutra REQUIRED)
+find_dependency(Vach REQUIRED)
+find_dependency(Yantra REQUIRED)
+find_dependency(Darshana REQUIRED)
+find_dependency(Threads REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/SphinxTargets.cmake")
+if(TARGET Sphinx::Sphinx AND NOT TARGET Sphinx::sphinx)
+  add_library(Sphinx::sphinx ALIAS Sphinx::Sphinx)
+endif()
+check_required_components(Sphinx)

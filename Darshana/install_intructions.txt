@@ -1,0 +1,33 @@
+================================================================================
+DARSHANA — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Darshana Visualization & SVG Engine (Layer 6 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Darshana
+Dependencies:
+  - C++23 compiler (GCC 14+)
+  - libvulkan-dev (or use preset release-headless to disable Vulkan)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Darshana"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+
+2. RUN TEST SUITE (Unit, Property, Golden SVG, Stress, GNU Style)
+-----------------------------------------------------------------
+  ctest --test-dir build-release --output-on-failure
+
+3. INSTALL TO ~/.local
+----------------------
+  cmake --install build-release --prefix "$HOME/.local"
+
+4. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release           : Optimized Release build
+  - debug             : Debug build
+  - release-asan      : Release + AddressSanitizer & UBSan
+  - release-tsan      : Release + ThreadSanitizer
+  - release-vulkan    : Release + Vulkan 1.2+ interactive GPU backend
+  - release-headless  : Release without GPU/windowing dependencies

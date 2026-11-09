@@ -1,0 +1,22 @@
+[
+  {"id": 1,  "text": "Hello. What model are you?",
+   "expects": "short", "tests": "baseline"},
+  {"id": 2,  "text": "What is 17 * 23?",
+   "expects": "42_related", "tests": "arithmetic"},
+  {"id": 3,  "text": "Write a Python one-liner that reverses a string.",
+   "expects": "code", "tests": "code_generation"},
+  {"id": 4,  "text": "Now translate that to Rust.",
+   "expects": "code", "tests": "context_followup"},
+  {"id": 5,  "text": "¿Cómo se dice 'good morning' en español?",
+   "expects": "spanish", "tests": "unicode_tokenization"},
+  {"id": 6,  "text": "Explain what a KV cache is in one sentence.",
+   "expects": "short", "tests": "technical_accuracy"},
+  {"id": 7,  "text": "Write a haiku about compilers.",
+   "expects": "haiku", "tests": "creative_generation"},
+  {"id": 8,  "text": "What was the answer to my earlier math question?",
+   "expects": "42_related", "tests": "long_context_recall"},
+  {"id": 9,  "text": "List three C++23 features I should know about.",
+   "expects": "list", "tests": "list_generation"},
+  {"id": 10, "text": "Summarize this entire conversation in one sentence.",
+   "expects": "summary", "tests": "summarization"}
+]

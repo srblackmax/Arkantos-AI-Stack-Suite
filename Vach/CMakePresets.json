@@ -1,0 +1,79 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VACH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release-asan",
+      "displayName": "Release + ASan/UBSan",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VACH_ENABLE_ASAN": "ON",
+        "VACH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release-tsan",
+      "displayName": "Release + TSan",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VACH_ENABLE_TSAN": "ON",
+        "VACH_BUILD_TESTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan"
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

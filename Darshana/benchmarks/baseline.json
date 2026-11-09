@@ -1,0 +1,153 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6)",
+    "driver": "NVIDIA 550.163.01 / Vulkan 1.4.309",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T18:34:09Z",
+  "metrics": [
+    {
+      "name": "10m_scatter_offscreen_fps",
+      "value": 2949.4392,
+      "unit": "frames/second (offscreen)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1a-10m-point-scatter-offscreen-throughput",
+      "sanity_check": { "passed": true, "details": "800x600 RGBA readback FNV1a=8294469435599320737" }
+    },
+    {
+      "name": "10m_scatter_cached_overlay_offscreen_fps",
+      "value": 21857.9745,
+      "unit": "frames/second (offscreen, cached static base)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1a-10m-point-scatter-offscreen-throughput",
+      "sanity_check": { "passed": true, "details": "500 overlay updates composited over cached 10M base" }
+    },
+    {
+      "name": "10m_scatter_cpu_submission_fps",
+      "value": 139114.6410,
+      "unit": "frames/second (CPU submission)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1b-10m-point-scatter-cpu-submission-rate",
+      "sanity_check": { "passed": true, "details": "500 command buffers submitted & retired via timeline semaphore" }
+    },
+    {
+      "name": "10m_scatter_presented_fps",
+      "value": 1847.9567,
+      "unit": "FPS (presented, VK_PRESENT_MODE_IMMEDIATE_KHR)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1c-10m-point-scatter-presented-fps",
+      "sanity_check": { "passed": true, "details": "100 VkSwapchainKHR frames presented on VK_KHR_xcb_surface" }
+    },
+    {
+      "name": "10m_scatter_presented_fifo_vsync_fps",
+      "value": 59.9999,
+      "unit": "FPS (presented, VK_PRESENT_MODE_FIFO_KHR)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1c-10m-point-scatter-presented-fps",
+      "sanity_check": { "passed": true, "details": "60 VkSwapchainKHR frames locked to 60 Hz display vblank" }
+    },
+    {
+      "name": "10m_scatter_overlay_jitter_p99_p50_ms",
+      "value": 0.2947,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-10m-point-scatter-interactive-overlay-jitter",
+      "sanity_check": { "passed": true, "details": "p99-p50 overlay frame time < 1.0 ms" }
+    },
+    {
+      "name": "1m_line_offscreen_fps",
+      "value": 7342.7275,
+      "unit": "frames/second (offscreen)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3a-1m-point-line-offscreen-throughput",
+      "sanity_check": { "passed": true, "details": "800x600 RGBA readback FNV1a=17812521895849381041" }
+    },
+    {
+      "name": "1m_line_cpu_submission_fps",
+      "value": 141816.1716,
+      "unit": "frames/second (CPU submission)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3b-1m-point-line-cpu-submission-rate",
+      "sanity_check": { "passed": true, "details": "500 command buffers submitted & retired via timeline semaphore" }
+    },
+    {
+      "name": "1m_line_presented_fps",
+      "value": 2637.9614,
+      "unit": "FPS (presented, VK_PRESENT_MODE_IMMEDIATE_KHR)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3c-1m-point-line-presented-fps",
+      "sanity_check": { "passed": true, "details": "150 VkSwapchainKHR frames presented on VK_KHR_xcb_surface" }
+    },
+    {
+      "name": "streaming_60hz_jitter_p99_p50_ms",
+      "value": 0.5099,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-streaming-ring-buffer-frame-jitter",
+      "sanity_check": { "passed": true, "details": "300 O(1) ring-buffer appends verified non-empty" }
+    },
+    {
+      "name": "svg_1m_spec_validation_layout_p50_ms",
+      "value": 1.2933,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5a-svg-export-spec-validation-and-layout-time",
+      "sanity_check": { "passed": true, "details": "1,000,000 finite 2D points validated in SnapshotData" }
+    },
+    {
+      "name": "svg_1m_xml_generation_p50_ms",
+      "value": 17.7809,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5b-svg-export-in-memory-xml-generation-time",
+      "sanity_check": { "passed": true, "details": "12-thread fixed-point SVG string generated (1,000,000 M...h0 points)" }
+    },
+    {
+      "name": "svg_1m_write_to_disk_fsync_p50_ms",
+      "value": 4.4927,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5c-svg-export-write-to-disk-time-with-fsync",
+      "sanity_check": { "passed": true, "details": "open+write+fsync verified on disk: <?xml header, </svg> trailer, 27 DOM elements, 1,000,000 subpaths" }
+    },
+    {
+      "name": "svg_1m_file_size_mb",
+      "value": 13.1876,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5d-svg-export-final-file-size-and-element-count",
+      "sanity_check": { "passed": true, "details": "13828214 bytes, 27 XML elements, 1000000 subpath points" }
+    },
+    {
+      "name": "cold_start_auto_ms",
+      "value": 1.6853,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-cold-start-latency",
+      "sanity_check": { "passed": true, "details": "First rendered 800x600 frame verified non-zero FNV1a hash" }
+    },
+    {
+      "name": "cold_start_vulkan_gpu_init_ms",
+      "value": 66.2520,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-cold-start-latency",
+      "sanity_check": { "passed": true, "details": "Vulkan 1.2 instance + RTX 3070 device + 384 MiB slabs + 1st GPU frame" }
+    },
+    {
+      "name": "rss_bare_process_mb",
+      "value": 3.9648,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7a-bare-process-rss",
+      "sanity_check": { "passed": true, "details": "Measured at first statement of main() via /proc/self/status VmRSS" }
+    },
+    {
+      "name": "rss_post_library_load_mb",
+      "value": 4.5391,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7b-post-library-load-rss",
+      "sanity_check": { "passed": true, "details": "Measured after Figure context init, before GpuDevice::create()" }
+    },
+    {
+      "name": "rss_post_gpu_init_mb",
+      "value": 186.4414,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7c-post-gpu-init-rss",
+      "sanity_check": { "passed": true, "details": "Measured after GpuDevice::create() + 1 warm-up frame + 1s idle" }
+    },
+    {
+      "name": "peak_gpu_pool_10m_mb",
+      "value": 79.9561,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#8-peak-gpu-pool-memory",
+      "sanity_check": { "passed": true, "details": "10M points (76.29 MB) + 2x 800x600 RGBA framebuffers (3.66 MB)" }
+    }
+  ]
+}

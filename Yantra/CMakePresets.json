@@ -1,0 +1,185 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "ON",
+        "YANTRA_ENABLE_CUDA": "ON",
+        "YANTRA_USE_SANITIZERS": "OFF",
+        "YANTRA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release Build (Portable x86-64-v3 + Runtime AVX-512 Dispatch)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "ON",
+        "YANTRA_ENABLE_CUDA": "ON",
+        "YANTRA_BUILD_FAT_NATIVE": "OFF",
+        "YANTRA_USE_SANITIZERS": "OFF",
+        "YANTRA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-asan",
+      "displayName": "Release with AddressSanitizer + UndefinedBehaviorSanitizer",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-asan",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "OFF",
+        "YANTRA_ENABLE_CUDA": "ON",
+        "YANTRA_USE_SANITIZERS": "ON",
+        "YANTRA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-tsan",
+      "displayName": "Release with ThreadSanitizer",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-tsan",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "OFF",
+        "YANTRA_ENABLE_CUDA": "ON",
+        "YANTRA_USE_SANITIZERS": "OFF",
+        "YANTRA_USE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "release-cuda",
+      "displayName": "Release with CUDA 12.x Hybrid GPU & Native Host Tuning",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-cuda",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "ON",
+        "YANTRA_ENABLE_CUDA": "ON",
+        "YANTRA_BUILD_FAT_NATIVE": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "YANTRA_USE_SANITIZERS": "OFF",
+        "YANTRA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-headless",
+      "displayName": "Release Headless Build (CI without CUDA / GPU)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-headless",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "YANTRA_BUILD_TESTS": "ON",
+        "YANTRA_BUILD_BENCH": "ON",
+        "YANTRA_ENABLE_CUDA": "OFF",
+        "YANTRA_USE_SANITIZERS": "OFF",
+        "YANTRA_USE_TSAN": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "jobs": 20
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "jobs": 20
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan",
+      "jobs": 20
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan",
+      "jobs": 20
+    },
+    {
+      "name": "release-cuda",
+      "configurePreset": "release-cuda",
+      "jobs": 20
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless",
+      "jobs": 20
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-cuda",
+      "configurePreset": "release-cuda",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

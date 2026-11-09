@@ -1,0 +1,27 @@
+================================================================================
+OBSIDIAN — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Obsidian NLP (Layer 4 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Obsidian
+Dependencies: Hyper Math, Bellows, Basalt Deep Learning
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (GNU Autotools Build)
+--------------------------------------------
+  cd "$HOME/AI/Arkantos/Obsidian"
+  ./configure --prefix="$HOME/.local" CXXFLAGS="-O3 -march=native"
+  make -j$(nproc)
+
+2. RUN TEST SUITE
+-----------------
+  make check
+
+3. INSTALL TO ~/.local
+----------------------
+  make install
+
+  # Optional: also install the CMake package config files (ObsidianConfig.cmake)
+  # so downstream CMake projects can use find_package(Obsidian REQUIRED):
+  cmake -B build -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+  cmake --install build --prefix "$HOME/.local"

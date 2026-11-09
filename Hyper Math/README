@@ -1,0 +1,141 @@
+Hyper Math (`libhypermath`)
+===========================
+
+Hyper Math is a clean-room C++20 numerical, scientific, and relational columnar
+computing library engineered in compliance with the **GNU Coding Standards** and
+licensed under the **GNU General Public License v3.0 or later (GPLv3+)**.
+
+It unifies the capabilities of four foundational Python data-science libraries
+within a single, zero-dependency C++20 architecture:
+
+1. **NumPy Equivalent (`hyper_math::tensor`)**
+   - **Rank-Agnostic Affine Lattice Engine**: Arbitrary N-dimensional shapes and
+     byte/element strides over 64-byte cache-line aligned reference-counted slab
+     buffers (`slab_buffer<T>`).
+   - **Zero-Copy Views & Contradiction-Free Broadcasting**: Slicing, transposition,
+     reshaping, axis squeezing/expansion, and multi-operand stride broadcasting.
+   - **Lazily Fused Morphism Expressions (`ufunc`)**: Compile-time expression
+     templates that fuse elementwise arithmetic and transcendental operations
+     (`sin`, `cos`, `exp`, `log`, `sqrt`, `pow`, `clip`, `where`) into a single
+     allocation-free pass.
+   - **Reductions, Manipulation & Contractions**: Full, axis-specific, and
+     NaN-safe reductions (`sum`/`nansum`, `mean`/`nanmean`, `var`/`nanvar`,
+     `std_dev`/`nanstd`, `min`/`nanmin`, `max`/`nanmax`, `argmin`/`nanargmin`,
+     `argmax`/`nanargmax`, `cumsum`/`nancumsum`, `cumprod`/`nancumprod`,
+     `median`/`nanmedian`, `percentile`/`nanpercentile`, `quantile`/`nanquantile`),
+     array manipulation (`meshgrid`, `tile`, `repeat`, `pad`, `flip`, `roll`,
+     `rot90`, `tril`, `triu`, `vander`, `searchsorted`, `bincount`, `histogram`,
+     `histogram2d`, `histogramdd`, `gradient`, `cov`, `corrcoef`, `polyfit`,
+     `polyval`, `polydiv`, `sliding_window_view`), matrix contractions (`matmul`,
+     `dot`, `vdot`, `inner`, `outer`, `kron`, `tensordot`, `multi_dot`),
+     generalized Einstein summation (`einsum`, `einsum_path`), and `.npy` /
+     `.npz` binary serialization (`save_npy`, `load_npy`, `save_npz`, `load_npz`).
+
+2. **SciPy Equivalent (`hyper_math::scientific`)**
+   - **`linalg`**: LU (`lu`), symmetric indefinite `ldl`, Householder &
+     column-pivoted QR (`qr`, `qr_pivoted`, `rq`, `qz`), Cholesky, Hessenberg,
+     Schur (`schur`, `rsf2csf`), symmetric & general eigensolvers (`eigh`,
+     `eigh_generalized`, `eigh_tridiagonal`, `eig`, `eigvals`), SVD (`svd`,
+     `svdvals`, `diagsvd`, `subspace_angles`), Moore-Penrose pseudoinverse
+     (`pinv`), determinant (`det`, `slogdet`), inverse (`inv`), least squares
+     (`lstsq`), matrix functions (`expm`, `expm_frechet`,
+     `fractional_matrix_power`, `funm`, `cosm`, `sinm`, `tanm`, `coshm`,
+     `sinhm`, `tanhm`, `signm`, `sqrtm`, `logm_spd`, `polar`), banded solvers
+     (`solve_banded`, `cholesky_banded`), Sylvester/Lyapunov/Riccati solvers,
+     and structured matrices (`toeplitz`, `circulant`, `hankel`, `hilbert`,
+     `invhilbert`, `hadamard`, `companion`, `leslie`, `fiedler`, `pascal`,
+     `helmert`, `dft_matrix`, `khatri_rao`, `clarkson_woodruff_transform`).
+   - **`fft`**: Mixed-radix Cooley-Tukey and Bluestein Chirp-Z arbitrary-length
+     1D, 2D, and N-D Fast Fourier Transforms (`fft`, `ifft`, `rfft`, `irfft`,
+     `hfft`, `ihfft`, `fft2`, `ifft2`, `rfft2`, `irfft2`, `fftn`, `ifftn`,
+     `rfftn`, `irfftn`), Type-I..IV Discrete Cosine & Sine Transforms (`dct`,
+     `idct`, `dct2`, `idct2`, `dst`, `idst`), Fast Hankel Transform (`fht`,
+     `ifht`), and fast FFT convolution (`convolve_fft`).
+   - **`integrate`**: Adaptive Gauss-Kronrod G7-K15 1D/2D/3D/N-D quadrature
+     (`quad`, `quad_vec`, `dblquad`, `tplquad`, `nquad`), `tanhsinh`, Romberg,
+     Gauss-Legendre, composite Simpson's/trapezoidal rules, adaptive RK4(5),
+     RK23, DOP853, & stiff implicit Radau/BDF ODE solvers with event detection
+     (`solve_ivp`, `solve_ivp_events`), and two-point BVP solver (`solve_bvp`).
+   - **`optimize`**: Root finding (`brentq`, `brenth`, `ridder`, `secant`,
+     `halley`, `fixed_point`, `fsolve`, `broyden1`), scalar & multivariable
+     optimization (BFGS, L-BFGS-B, CG, Newton-CG, Powell, Dogleg, Trust-NCG,
+     Nelder-Mead, SLSQP), nonlinear & bounded least squares (`least_squares_lm`,
+     `least_squares_bounds`, `curve_fit`, `nnls`, `lsq_linear`), Simplex LP &
+     branch-and-bound MILP (`linprog`, `milp`), global optimizers
+     (`dual_annealing`, `differential_evolution`, `basinhopping`, `shgo`,
+     `direct`), and linear/quadratic assignment (`linear_sum_assignment`,
+     `quadratic_assignment`).
+   - **`stats`**: Complete special function suite (Gamma, Polygamma, Beta, Error
+     functions, Dawson, Fresnel, Sine/Cosine/Exponential integrals, Spence,
+     Lambert W, Wright Omega, Hurwitz/Riemann Zeta, Airy, Bessel `jv`/`yv`/`kv`/
+     `iv`, spherical Bessel, associated Legendre, spherical harmonics,
+     orthogonal polynomials, hypergeometric `hyp2f1`/`hyp1f1`, complete
+     elliptic integrals), 22 univariate/discrete/multivariate distributions
+     (`multivariate_normal_dist`, `dirichlet_dist`, `wishart_dist`),
+     Quasi-Monte Carlo (`qmc::halton`, `qmc::sobol`, `qmc::latin_hypercube`,
+     `qmc::poisson_disk`, `qmc::discrepancy`), bootstrap/permutation/Monte-Carlo
+     hypothesis testing, 25+ statistical tests, Gaussian KDE, and PCA.
+   - **`spatial` & `cluster`**: Clean-room $k$-d Tree (`kd_tree`), 15-metric
+     `cdist`/`pdist`/`squareform`, 2D Convex Hull, Delaunay triangulation
+     (`delaunay_2d`), Voronoi & Spherical Voronoi diagrams, Halfspace
+     Intersection, Boolean polygon clipping, 3D `rotation` (quaternions, Euler
+     angles, SLERP, Kabsch alignment) & `rigid_transform`, $k$-Means++
+     (`kmeans2`), hierarchical clustering (`linkage`, `fcluster`, `cophenet`,
+     `optimal_leaf_ordering`), `dbscan`, and `optics`.
+   - **`interpolate`, `signal`, `sparse`**: Cubic/Akima/PCHIP/Hermite/B-splines
+     (`bspline`, `make_interp_spline`, `make_lsq_spline`, `make_smoothing_spline`,
+     `splprep`, `splev`), RBF & 2D/3D grid interpolation, FIR & IIR filters
+     (Butterworth, Chebyshev I/II, Elliptic, Bessel, notch/peak, SOS), Welch/
+     Lomb-Scargle/STFT/CZT spectral analysis, LTI state-space systems
+     (`lti_system`, `lsim`, `step_response`, `impulse_response`, `bode`), and
+     CSR/CSC/COO/DIA/BSR/DOK/LIL sparse matrices with CG, BiCGSTAB, GMRES,
+     MINRES, LSQR, LU/ILU, `eigsh`/`svds`, and `csgraph` graph algorithms.
+   - **`autograd` (Forward & Reverse-Mode Automatic Differentiation)**:
+     Dual numbers (`dual_number`), Wengert reverse-mode computation tape (`tape`
+     & `var`), exact scalar derivatives (`derivative`), directional gradients
+     (`forward_grad`), Jacobians (`jacobian`), reverse-mode gradients (`grad`,
+     `value_and_grad`), second-order Hessians (`hessian`), and analytical-gradient
+     BFGS optimization (`minimize_bfgs_autograd`).
+
+3. **Pandas & Polars Equivalent (`hyper_math::tabular`)**
+   - **Dual-Bitmask Columnar Memory**: Every `series` pairs a contiguous typed
+     tensor buffer (`int64_t`, `double`, `bool`, or UTF-8 strings) with a
+     64-bit word-aligned `validity_bitmap` accelerated via hardware
+     `std::popcount` and bitwise intrinsics.
+   - **Pandas Index Alignment & Windowing**: Bi-directional hash-indexed axis
+     labels (`index_axis`) supporting `loc` (label-based) and `iloc`
+     (positional) indexing, automatic label alignment in arithmetic, missing-data
+     imputation (`drop_nulls`, `fill_null`, `fill_forward`, `fill_backward`,
+     linear `interpolate`), rolling and EWM windows (`rolling_mean`,
+     `rolling_sum`, `rolling_min`, `rolling_max`, `rolling_std`, `ewm_mean`),
+     `value_counts`, `is_in`, `drop_duplicates`, `sample`, `corr`, `pivot`,
+     `melt`, `concat_rows`, RFC-4180 CSV I/O, and Hyper Math Binary (`.hmb`)
+     columnar serialization (`write_hmb`, `read_hmb`).
+   - **Polars Declarative Lazy Query Engine (`lazy_frame` & `expr`)**:
+     Expression AST (`col("x") * lit(2.0)`, `when().then().otherwise()`,
+     partitioned window functions `.over("group")`, aggregations) backed by a
+     rule-based algebraic query optimizer implementing **Predicate Pushdown**,
+     **Projection Pushdown (Column Pruning)**, **Filter Fusion**, and
+     **Constant Folding**, executing over vectorized hash joins and hash
+     group-by aggregations.
+
+Building and Testing
+--------------------
+
+```sh
+./configure     # Generate pkg-config hyper-math.pc
+make            # Build libhypermath.a, libhypermath.so, CLI, tests, and benchmarks
+make check      # Run the complete unit & CLI verification suite
+make bench      # Run the multi-threaded performance benchmark suite
+./bin/hyper-math --version
+./bin/hyper-math --demo
+./bin/hyper-math --repl
+```
+
+License
+-------
+
+Hyper Math is free software; you can redistribute it and/or modify it under the
+terms of the **GNU General Public License as published by the Free Software
+Foundation; either version 3 of the License, or (at your option) any later
+version**. See `COPYING` for the full license text.

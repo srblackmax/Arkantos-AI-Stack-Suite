@@ -1,0 +1,26 @@
+{
+  "num_nodes": 1000000,
+  "dim": 128,
+  "build_or_load_seconds": 4.791602,
+  "max_level": 5,
+  "level_1_fraction": 0.062212,
+  "expected_level_1_fraction": 0.062500,
+  "layer_counts": [1000000, 62212, 3903, 264, 20, 1],
+  "layer0_degree": {
+    "min": 16,
+    "median": 17,
+    "max": 32,
+    "fraction_below_m_div_4": 0.000000,
+    "reciprocity_fraction": 0.414226
+  },
+  "connectivity": {
+    "start_node": 593027,
+    "reachable_nodes": 1000000,
+    "reachable_fraction": 1.000000
+  },
+  "search_100q": {
+    "p50_ms": 1.372153,
+    "mean_recall_at_10": 0.984000,
+    "worst_recall_at_10": 0.800000
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "ON",
+        "DARSHANA_ENABLE_VULKAN": "ON",
+        "DARSHANA_USE_SANITIZERS": "OFF",
+        "DARSHANA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release Build (Portable x86-64-v3 + Vulkan)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "ON",
+        "DARSHANA_ENABLE_VULKAN": "ON",
+        "DARSHANA_BUILD_FAT_NATIVE": "OFF",
+        "DARSHANA_USE_SANITIZERS": "OFF",
+        "DARSHANA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-asan",
+      "displayName": "Release with AddressSanitizer + UndefinedBehaviorSanitizer",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-asan",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "OFF",
+        "DARSHANA_ENABLE_VULKAN": "ON",
+        "DARSHANA_USE_SANITIZERS": "ON",
+        "DARSHANA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-tsan",
+      "displayName": "Release with ThreadSanitizer",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-tsan",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "OFF",
+        "DARSHANA_ENABLE_VULKAN": "ON",
+        "DARSHANA_USE_SANITIZERS": "OFF",
+        "DARSHANA_USE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "release-vulkan",
+      "displayName": "Release with Vulkan 1.2+ GPU Backend & Native Host Tuning",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-vulkan",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "ON",
+        "DARSHANA_ENABLE_VULKAN": "ON",
+        "DARSHANA_BUILD_FAT_NATIVE": "ON",
+        "DARSHANA_USE_SANITIZERS": "OFF",
+        "DARSHANA_USE_TSAN": "OFF"
+      }
+    },
+    {
+      "name": "release-headless",
+      "displayName": "Release Headless Build (CPU SVG/PDF Only, No GPU Dependency)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release-headless",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "DARSHANA_BUILD_TESTS": "ON",
+        "DARSHANA_BUILD_BENCH": "ON",
+        "DARSHANA_ENABLE_VULKAN": "OFF",
+        "DARSHANA_USE_SANITIZERS": "OFF",
+        "DARSHANA_USE_TSAN": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "jobs": 20
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "jobs": 20
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan",
+      "jobs": 20
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan",
+      "jobs": 20
+    },
+    {
+      "name": "release-vulkan",
+      "configurePreset": "release-vulkan",
+      "jobs": 20
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless",
+      "jobs": 20
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-asan",
+      "configurePreset": "release-asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-tsan",
+      "configurePreset": "release-tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-vulkan",
+      "configurePreset": "release-vulkan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,409 @@
+ANTIGRAVITY PROMPT — YANTRA: C++23 MLOps & Production Library
+
+================================================================================
+CONTEXT
+================================================================================
+
+Yantra (Sanskrit: यन्त्र, "instrument, machine, mechanism") is the final
+library in the stack. It is the reliability and production layer that
+supervises, tracks, indexes, audits, and deploys the models built with Hyper
+Math, Bellows, Basalt, Obsidian, Surya, and orchestrated by Sutra. It is a
+sibling to Surya (vision), Sutra (agents), and Darshana (visualization).
+
+The reference hardware is an Intel i7-12700K (8 P-cores, 4 E-cores, AVX-512)
+and an NVIDIA RTX 3070 (8 GB VRAM). The entire stack is native C++23 — no
+Python, no pybind11, no interpreter overhead.
+
+Core Objective: Build the production backbone that makes the rest of the
+stack usable as a long-running service. Yantra has five distinct
+responsibilities, each a rival to a specific Python tool:
+
+  1. Experiment Tracking (rival: MLflow Tracking)
+  2. Model Registry & Versioning (rival: MLflow Registry, Kubeflow)
+  3. Workflow Orchestration (rival: Airflow, Prefect, Dagster, Kubeflow Pipelines)
+  4. Vector Index & Retrieval (rival: FAISS)
+  5. Bias & Fairness Auditing (rival: Fairlearn)
+
+Each responsibility is a separate module inside Yantra. They share a common
+foundation (memory, concurrency, error handling) but are independently
+usable.
+
+================================================================================
+1. ARCHITECTURAL MANDATE
+================================================================================
+
+1.1. Experiment Tracking (yantra::track)
+
+  - A run is a scoped object: yantra::Run. Creation assigns a run ID,
+    records the start timestamp, and opens a write-ahead log (WAL) for
+    crash-safe metric logging.
+  - Metrics are logged as (step, key, value, timestamp) tuples. Supports
+    scalars, histograms, and arbitrary binary blobs. All writes append to
+    the WAL; periodic compaction merges WAL segments into a columnar
+    binary format (Apache Arrow C++ DataFusion or a custom columnar
+    writer) for efficient range queries.
+  - Parameters (hyperparameters) are logged once per run and are immutable
+    after the run enters the RUNNING state. Artifacts (model files,
+    checkpoints, plots) are content-addressed (BLAKE3 hash) and stored in a
+    content-addressable store.
+  - The tracking store is queryable: yantra::ExperimentStore::query(filter)
+    returns runs matching a predicate over parameters, metrics, and tags.
+
+1.2. Model Registry (yantra::registry)
+
+  - A model is a named entity with an ordered sequence of versions. Each
+    version is immutable and references an artifact in the content-
+    addressable store.
+  - Stages: STAGING, PRODUCTION, ARCHIVED. Transitions are explicit,
+    logged, and require a justification string (audit trail).
+  - The registry maintains a lineage graph: each model version records the
+    run ID that produced it, the dataset hash used for training, and the
+    code commit hash. Lineage is queryable.
+  - Registry operations (register, promote, archive) are transactional:
+    either the model version is fully registered with its artifact, or the
+    operation fails and leaves the registry unchanged.
+
+1.3. Workflow Orchestration (yantra::dag)
+
+  - A pipeline is a DAG of yantra::Task nodes. Tasks declare their
+    dependencies, resource requirements (CPU cores, GPU VRAM), and a
+    run() method. The DAG executor schedules tasks in topological order,
+    maximizing parallelism subject to resource constraints.
+  - Supports conditional edges (task runs only if predicate is true),
+    retries with exponential backoff, and timeouts.
+  - The executor is a work-stealing thread pool. Scheduling is
+    work-stealing across available cores. Avoid centralized queue
+    bottlenecks; each worker maintains a local deque and steals from the
+    tail of others.
+  - Pipeline definitions are data (JSON or a C++ builder API), not
+    imperative code. This enables hot-swapping, versioning, and multi-
+    tenant execution.
+  - Every task execution produces a yantra::TaskResult with status,
+    duration, resource usage, and output artifact references.
+
+1.4. Vector Index (yantra::index)
+
+  - Implement a CPU-first vector index with AVX-512 acceleration. Support
+    at minimum:
+      - Flat (exact, brute-force) for validation baselines.
+      - HNSW (Hierarchical Navigable Small World) for low-latency
+        approximate search. Target: recall@10 ≥ 95% with p50 latency
+        ≤ 2 ms for 1M vectors of dimension 768 on the reference CPU.
+      - IVF-PQ (Inverted File with Product Quantization) for memory-
+        constrained deployments. Target: 8× search latency reduction
+        versus HNSW at recall@10 ≥ 90%[reference:0].
+  - GPU acceleration (CUDA) is optional but must be behind an opaque
+    handle. If present, target GPU CAGRA (graph-based) search for ≥ 4×
+    speedup over CPU HNSW[reference:1].
+  - The index supports incremental insertion (new vectors added without
+    full rebuild) and persistence (save/load to disk with mmap for fast
+    cold starts)[reference:2].
+  - Metadata filtering: vector search can be combined with scalar
+    predicates (e.g., "similar to X AND timestamp > Y"). Implement a
+    pre-filter or post-filter path depending on predicate selectivity.
+
+1.5. Bias & Fairness Auditing (yantra::fairness)
+
+  - Compute standard group fairness metrics from predictions, labels, and
+    sensitive attributes:
+      - Demographic Parity Difference / Ratio
+      - Equalized Odds Difference
+      - Equal Opportunity Difference
+      - Predictive Parity
+  - Provide post-processing mitigation: threshold optimization to satisfy
+    a fairness constraint (e.g., equalized odds within tolerance ε) while
+    minimizing accuracy loss.
+  - The API accepts yantra::DatasetView (a zero-copy span of rows with
+    column metadata) and returns a yantra::FairnessReport. No Python, no
+    pandas — operate directly on the in-memory representation produced by
+    Hyper Math / Bellows.
+
+================================================================================
+2. PERFORMANCE TARGETS (HARD REQUIREMENTS)
+================================================================================
+
+These are non-negotiable benchmarks on the reference hardware.
+
+  Experiment Tracking:
+    - Log throughput: ≥ 100,000 metric points/second sustained.
+    - Query latency: parameter/metric range query over 10,000 runs
+      returns in ≤ 50 ms (p99).
+
+  Model Registry:
+    - Register (hash + store + index) a 4 GB model artifact in ≤ 5 seconds
+      (NVMe).
+    - Lineage query for a model version returns in ≤ 10 ms (p99).
+
+  Workflow Orchestration:
+    - DAG with 100 independent tasks: wall-clock time ≤ 1.2× the
+      theoretical minimum (i.e., orchestration overhead < 20%)[reference:3].
+    - DAG with 1,000 nodes and depth 10: scheduling completes in ≤ 5 ms.
+
+  Vector Index:
+    - HNSW: 1M vectors (dim 768), recall@10 ≥ 95%, p50 latency ≤ 2 ms,
+      p99 ≤ 10 ms.
+    - IVF-PQ: 1M vectors, recall@10 ≥ 90%, p50 latency ≤ 0.5 ms.
+    - Build time for 1M vectors: ≤ 60 seconds (HNSW), ≤ 30 seconds
+      (IVF-PQ).
+
+  Bias Auditing:
+    - Compute all four fairness metrics on 1M rows with 10 sensitive
+      groups in ≤ 500 ms.
+    - Threshold optimization for equalized odds converges in ≤ 100
+      iterations.
+
+  Cold-Start:
+    - Yantra registry + tracking + index (empty) initializes in ≤ 100 ms.
+    - Loading a persisted 1M-vector HNSW index from disk (mmap) in
+      ≤ 500 ms.
+
+  Memory:
+    - Idle RSS ≤ 50 MB (all modules, no data loaded).
+    - HNSW index memory overhead: ≤ 1.5× the raw vector storage
+      (including graph links).
+
+================================================================================
+3. MEMORY MANAGEMENT (HARD RULES)
+================================================================================
+
+  - No raw new/delete. std::unique_ptr for exclusive ownership,
+    std::shared_ptr only where ownership is genuinely shared, std::pmr
+    monotonic/arena resources for per-query and per-task scratch memory.
+  - Vector index storage: use mmap for persistence. Do not load the entire
+    index into RAM if it exceeds available memory; rely on the OS page
+    cache for hot pages.
+  - All GPU memory (if CUDA is used) is managed by a pool allocator built
+    on cudaMallocAsync. Never call cudaMalloc in a per-query path.
+  - Every public API must document allocation behavior and teardown. Fallible
+    APIs return std::expected<T, yantra::Error> (C++23).
+  - All resource acquisition is RAII. File handles, mmap regions, GPU
+    buffers, and thread handles are wrapped in RAII types.
+
+================================================================================
+4. CONCURRENCY & ASYNCHRONY
+================================================================================
+
+  - All modules support concurrent use from multiple threads. The
+    tracking store uses a multi-writer, single-reader WAL; the registry
+    uses optimistic concurrency with version checks; the DAG executor
+    uses a work-stealing pool; the vector index supports concurrent
+    readers (lock-free or reader-writer locks) and serialized writers.
+  - No std::mutex in hot paths. Use lock-free queues (SPSC/MPSC) for
+    metric ingestion, reader-writer locks (std::shared_mutex) for index
+    metadata, and atomic flags for task status.
+  - Background threads (compaction, index persistence, DAG monitoring)
+    must not block user-facing operations. Use condition variables or
+    atomic queues for coordination.
+  - Compile clean under -fsanitize=thread with zero reports on the full
+    test suite, including concurrent metric logging, concurrent vector
+    search, and concurrent DAG execution.
+
+================================================================================
+5. ERROR HANDLING (C++23 std::expected)
+================================================================================
+
+  - All fallible public APIs return std::expected<T, yantra::Error>.
+  - yantra::Error is a variant distinguishing:
+      - TrackingError: WAL write failure, corrupted segment, query
+        parse error.
+      - RegistryError: artifact not found, stage transition invalid,
+        lineage cycle detected.
+      - DagError: cycle in DAG, resource deadlock, task timeout,
+        missing dependency.
+      - IndexError: dimension mismatch, index not built, persistence
+        corruption, GPU out of memory.
+      - FairnessError: missing sensitive attribute, insufficient
+        samples per group, constraint unsatisfiable.
+  - Tool errors (e.g., a pipeline task fails) must not crash the
+    orchestrator. The task returns a failed TaskResult; the DAG
+    executor records the failure and either retries (if configured) or
+    marks downstream tasks as skipped.
+  - CUDA calls wrapped in YANTRA_CUDA_CHECK, returning a typed error.
+  - No silent failures. Every error path is logged at least once.
+
+================================================================================
+6. CODING STANDARDS (GNU — STYLE ONLY)
+================================================================================
+
+The entire Yantra codebase follows GNU coding standards for style:
+2-space indentation, braces on new lines, 79-column lines,
+lower_case_with_underscores for variables and functions, UPPER_CASE for
+macros, CamelCase for types, GNU comment blocks for file headers and
+function documentation, complete-sentence error messages (no trailing
+period).
+
+These apply SOLELY to coding style — not to Autotools, not to GNU project
+layout, not to GNU licensing. The build system is CMake.
+
+Run clang-format --dry-run --Werror with a GNU-compatible configuration
+in the verification loop.
+
+================================================================================
+7. TESTING & AUTONOMOUS BUG DETECTION
+================================================================================
+
+7.1. Unit Tests
+  - Every public API: success paths, error paths (invalid filter, empty
+    DAG, dimension mismatch), boundary conditions (zero runs, zero
+    vectors, single-element index).
+  - Vector index: recall validation against brute-force Flat on random
+    datasets (10K, 100K, 1M vectors).
+  - DAG executor: cycle detection, resource deadlock avoidance, retry
+    behavior, timeout behavior.
+
+7.2. Property-Based Tests
+  - Tracking: for any sequence of metric log operations, replaying the
+    WAL produces the same final state as the live state.
+  - Registry: version numbers are monotonically increasing and no
+    version is lost across concurrent registrations.
+  - DAG: for any acyclic graph, the executor produces a topological order;
+    for any cyclic graph, it rejects with a typed error before execution.
+  - Vector index: for any query, the returned results are a subset of the
+    ground-truth nearest neighbors within the documented recall bound.
+
+7.3. Stress & Leak Tests
+  - 1M metric points logged across 1,000 runs, no memory growth
+    (ASan/LSan + RSS delta).
+  - 100 concurrent DAG executions, no deadlocks (TSan), no task loss.
+  - 1M vector search queries across 8 threads, no index corruption,
+    no memory leaks.
+  - 24-hour soak test with continuous metric logging and periodic index
+    queries; RSS must stabilize within 10% of the first hour's peak.
+
+7.4. Performance Regression Tests
+  - Every benchmark in Section 2 runs in CI (or a dedicated hardware
+    runner). A regression > 10% fails the build.
+
+7.5. Autonomous Bug-Hunting Protocol
+  - After every module: cmake --build --preset release-asan, ctest,
+    clang-tidy (cppcoreguidelines-*, modernize-*), clang-format
+    --dry-run --Werror (GNU), release-tsan.
+  - On failure: diagnose root cause, fix, re-run full suite.
+  - Maintain KNOWN_ISSUES.md with every bug found, root cause, and fix.
+  - Do not mark any task complete with a failing test, sanitizer report,
+    tidy warning, or style violation.
+
+================================================================================
+8. BUILD & PACKAGING
+================================================================================
+
+  CMake ≥ 3.28, Ninja, C++23 (GCC 13+ or Clang 17+).
+
+  Presets:
+    debug, release, release-asan, release-tsan, release-cuda,
+    release-headless (no GPU, for CI without CUDA).
+
+  Zero third-party dependencies in public headers except the C++ standard
+  library. CUDA is a build dependency only for the GPU vector index
+  backend; wrap CUDA types in opaque handles (yantra::GpuIndex).
+
+  Install target exports YantraConfig.cmake with optional
+  find_dependency(CUDA).
+
+  Inline namespace: namespace yantra::v1.
+  CMake target: Yantra::Yantra.
+
+================================================================================
+9. OBSERVABILITY
+================================================================================
+
+  - Structured logging via pluggable sink (default: stderr, JSON-lines).
+    No std::cout, printf, std::endl.
+  - Per-module statistics:
+      - yantra::TrackingStats: metrics logged/sec, query latency
+        percentiles, WAL size.
+      - yantra::RegistryStats: registrations/sec, stage transitions,
+        lineage query latency.
+      - yantra::DagStats: task throughput, scheduling latency, queue
+        depth per worker, retry count.
+      - yantra::IndexStats: search latency percentiles, recall estimate
+        (via periodic brute-force sampling), memory usage.
+      - yantra::FairnessStats: audits performed, average constraint
+        violation, threshold adjustment magnitude.
+  - Zero-cost when disabled (compile-time flag).
+  - Public YantraProfiler hook for Tracy/Perfetto/Nsight.
+
+================================================================================
+10. DOCUMENTATION
+================================================================================
+
+  - Every public symbol: Doxygen comment with @pre, @post, @returns
+    (for std::expected), thread-safety notes.
+  - YANTRA.md: hardware requirements, module overview, concurrency model,
+    error taxonomy, memory budgeting, and reproduction steps for every
+    benchmark.
+  - BENCHMARKS.md: comparison table against the Python incumbents'
+    published numbers:
+      - MLflow: registration latency, query latency.
+      - Airflow/Prefect/Dagster: DAG scheduling overhead.
+      - FAISS: recall/latency/memory for HNSW and IVF-PQ[reference:4].
+      - Fairlearn: metric computation time.
+  - README.md: one-paragraph pitch, the Yantra naming rationale (the
+    instrument that puts theory into practice), and a 10-line quick-start
+    example using a mock pipeline and a mock model.
+
+================================================================================
+11. DEFINITION OF DONE
+================================================================================
+
+  1. All tests pass under release-asan and release-tsan with zero reports.
+  2. Every performance target in Section 2 is met and verified by the
+     dedicated benchmark suite.
+  3. A 100-task DAG runs with < 20% orchestration overhead (wall-clock
+     time ≤ 1.2× theoretical minimum).
+  4. A 1M-vector HNSW index achieves recall@10 ≥ 95% and p50 latency
+     ≤ 2 ms.
+  5. A 1M-row fairness audit completes in ≤ 500 ms.
+  6. clang-tidy passes with cppcoreguidelines-* and modernize-* clean,
+     and clang-format --dry-run --Werror (GNU) reports zero violations.
+  7. KNOWN_ISSUES.md exists and documents the bug-hunting history.
+  8. YANTRA.md and BENCHMARKS.md exist and match reality on the reference
+     hardware.
+  9. A fresh clone builds with
+     cmake --preset release && cmake --build --preset release
+     on a clean machine with no manual steps.
+ 10. YantraConfig.cmake is installed and a downstream consumer can link
+     against Yantra::Yantra with one target_link_libraries call.
+
+================================================================================
+12. ANTI-PATTERNS (MUST BE ABSENT)
+================================================================================
+
+  - Any .py file, Python-generated code, transliteration artifacts.
+  - std::cout, printf, std::endl in library code.
+  - new/delete outside allocator implementations.
+  - Public APIs that throw across the ABI boundary.
+  - Synchronous operations that block the hot path (compaction, index
+    persistence, lineage queries).
+  - Silent failures on WAL corruption, index persistence errors, or DAG
+    deadlocks.
+  - Mutable global state; concurrent operations must be safe.
+  - Violations of GNU coding style (inconsistent indentation, non-GNU
+    naming, missing function comments).
+  - Any naming inconsistency with yantra / yantra::v1 / Yantra::Yantra /
+    YantraConfig.cmake.
+  - A DAG executor that uses a single centralized queue; work-stealing is
+    mandatory.
+  - A vector index that rebuilds from scratch on every insertion; HNSW
+    incremental insertion is mandatory.
+
+================================================================================
+13. COMPLETION CRITERION FOR THE ENTIRE 8-STEP STACK
+================================================================================
+
+Yantra is the final library. When Yantra passes its Definition of Done, the
+stack is complete: eight native C++23 libraries, zero Python, each with a
+verified performance baseline against its Python rival. At that point, Sphinx
+(the integration layer) can be built on a foundation that is not just
+functional, but supervised, tracked, indexed, and audited — a stack that can
+run as a production service rather than a demo.
+
+The next step after Yantra is the Sphinx integration phase (deferred from the
+detour), where Vach's STT/TTS/ALSA stubs are closed and the full voice loop
+is wired together using the Yantra registry for model versioning, the Yantra
+tracker for experiment telemetry, and the Yantra DAG executor for multi-step
+agentic workflows.
+
+================================================================================
+END OF PROMPT
+================================================================================

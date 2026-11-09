@@ -1,0 +1,103 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6, Driver 550.163.01)",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T18:43:22Z",
+  "metrics": [
+    {
+      "name": "1m_fused_ufunc_p50_ms",
+      "value": 3.0282,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-1m-element-fused-ufunc",
+      "sanity_check": { "passed": true, "details": "sum=-1236948.543308" }
+    },
+    {
+      "name": "1m_unfused_baseline_p50_ms",
+      "value": 5.5737,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-1m-element-fused-ufunc",
+      "sanity_check": { "passed": true, "details": "unfused 5-temporary baseline" }
+    },
+    {
+      "name": "matmul_256x256_warm_p50_ms",
+      "value": 0.8472,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-256x256-parallel-matrix-multiply",
+      "sanity_check": { "passed": true, "details": "fp64 256x256 sum=-1885.371904" }
+    },
+    {
+      "name": "matmul_256x256_warm_gflops",
+      "value": 39.6078,
+      "unit": "GFLOP/s (fp64 warm L2/L3)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-256x256-parallel-matrix-multiply",
+      "sanity_check": { "passed": true, "details": "33.55 MFLOP per call" }
+    },
+    {
+      "name": "fft_65536_p50_ms",
+      "value": 1.7161,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3-65536-point-radix-2-complex-fft",
+      "sanity_check": { "passed": true, "details": "spec[0].re=459.123004" }
+    },
+    {
+      "name": "lazy_groupby_100k_p50_ms",
+      "value": 3.2692,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-100k-row-lazy-filter-groupby-and-projection-pushdown",
+      "sanity_check": { "passed": true, "details": "nrows=4" }
+    },
+    {
+      "name": "autograd_1000d_p50_ms",
+      "value": 0.0493,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-1000-d-reverse-mode-autograd-gradient",
+      "sanity_check": { "passed": true, "details": "grad_sum=-999.000000" }
+    },
+    {
+      "name": "sparse_cg_2000_p50_ms",
+      "value": 1.2574,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-2000x2000-sparse-conjugate-gradient",
+      "sanity_check": { "passed": true, "details": "rel_residual=0.000000" }
+    },
+    {
+      "name": "qmc_halton_10kx8_p50_ms",
+      "value": 0.9946,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-10000-x-8-d-qmc-halton-sequence",
+      "sanity_check": { "passed": true, "details": "mean=0.499641" }
+    },
+    {
+      "name": "sql_50k_select_where_order_p50_ms",
+      "value": 2.0659,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#8-50k-row-sql-context-query",
+      "sanity_check": { "passed": true, "details": "nrows=100" }
+    },
+    {
+      "name": "rss_bare_process_mb",
+      "value": 3.2109,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#9-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Bare process VmRSS at main() entry" }
+    },
+    {
+      "name": "rss_post_library_load_mb",
+      "value": 3.6445,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#9-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-thread-pool init VmRSS" }
+    },
+    {
+      "name": "rss_peak_workload_mb",
+      "value": 95.9141,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#9-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Peak VmRSS after 8 benchmark workloads" }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+# Copyright (C) 2026 Kival
+#
+# This library is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this library.  If not, see <https://www.gnu.org/licenses/>.
+
+[build-system]
+requires = ["setuptools>=61.0", "pybind11>=2.10"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "basalt-dl"
+dynamic = ["version"]
+description = "Basalt Deep Learning Python bindings"
+readme = "README"
+license = {text = "GPL-3.0-or-later"}
+authors = [{name = "Kival", email = "Kival@basalt-dl.org"}]
+requires-python = ">=3.9"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+packages = ["basalt"]
+
+[tool.setuptools.dynamic]
+version = {attr = "basalt._version.__version__"}

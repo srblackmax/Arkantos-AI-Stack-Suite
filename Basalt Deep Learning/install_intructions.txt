@@ -1,0 +1,27 @@
+================================================================================
+BASALT DEEP LEARNING — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Basalt Deep Learning (Layer 3 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Basalt Deep Learning
+Dependencies: Hyper Math, Bellows, OpenMP, Pthreads
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (GNU Autotools Build)
+--------------------------------------------
+  cd "$HOME/AI/Arkantos/Basalt Deep Learning"
+  ./configure --prefix="$HOME/.local" CXXFLAGS="-O3 -march=native"
+  make -j$(nproc)
+
+2. RUN TEST SUITE
+-----------------
+  make check
+
+3. INSTALL TO ~/.local
+----------------------
+  make install
+
+  # Optional: also install the CMake package config files (BasaltConfig.cmake)
+  # so downstream CMake projects can use find_package(Basalt REQUIRED):
+  cmake -B build -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+  cmake --install build --prefix "$HOME/.local"

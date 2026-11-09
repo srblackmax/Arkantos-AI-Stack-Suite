@@ -1,0 +1,84 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    },
+    {
+      "name": "release-asan",
+      "displayName": "Release with ASan + UBSan",
+      "binaryDir": "${sourceDir}/build/release-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "SPHINX_ENABLE_ASAN": "ON",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    },
+    {
+      "name": "release-tsan",
+      "displayName": "Release with TSan",
+      "binaryDir": "${sourceDir}/build/release-tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "SPHINX_ENABLE_TSAN": "ON",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    },
+    {
+      "name": "release-cuda",
+      "displayName": "Release with CUDA",
+      "binaryDir": "${sourceDir}/build/release-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SPHINX_ENABLE_CUDA": "ON",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    },
+    {
+      "name": "release-headless",
+      "displayName": "Release Headless",
+      "binaryDir": "${sourceDir}/build/release-headless",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SPHINX_HEADLESS": "ON",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "release-asan", "configurePreset": "release-asan" },
+    { "name": "release-tsan", "configurePreset": "release-tsan" },
+    { "name": "release-cuda", "configurePreset": "release-cuda" },
+    { "name": "release-headless", "configurePreset": "release-headless" }
+  ],
+  "testPresets": [
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
+    { "name": "release-asan", "configurePreset": "release-asan", "output": { "outputOnFailure": true } },
+    { "name": "release-tsan", "configurePreset": "release-tsan", "output": { "outputOnFailure": true } },
+    { "name": "release-cuda", "configurePreset": "release-cuda", "output": { "outputOnFailure": true } },
+    { "name": "release-headless", "configurePreset": "release-headless", "output": { "outputOnFailure": true } }
+  ]
+}

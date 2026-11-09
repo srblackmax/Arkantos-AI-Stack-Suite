@@ -1,0 +1,112 @@
+Bellows — C++20 Concept-Oriented Machine-Learning Library
+=========================================================
+
+Bellows is an independent GPLv3 C++ machine-learning library. It
+follows the GNU Coding Standards as a style convention; it is not part
+of the GNU Project and is not affiliated with the Free Software
+Foundation.
+
+Overview
+--------
+
+Bellows provides a non-derivative, concept-oriented C++20 architecture
+for statistical learning, tabular preprocessing, unified second-order
+stagewise gradient boosting, composable pipelines, model evaluation, and
+low-latency binary inference.
+
+Rather than porting dynamic Python mixin hierarchies or string-keyed C
+handles, Bellows models machine-learning capabilities as structural
+C++20 concepts (`bellows::estimator`, `bellows::supervised_fittable`,
+`bellows::unsupervised_fittable`, `bellows::predictor`,
+`bellows::belief_predictor`, `bellows::transformer`,
+`bellows::categorical_aware`, `bellows::missing_aware`,
+`bellows::tunable`, and `bellows::serialisable`) and free customization
+point objects (`bellows::fit`, `bellows::predict`,
+`bellows::predict_beliefs`, `bellows::transform`, `bellows::infer_one`).
+
+Key Capabilities
+----------------
+
+  * Schema-aware tabular domain (`bellows::data_table` and
+    `bellows::table_view`) with first-class real, nominal, and ordinal
+    column scales and native missing-value representation.
+  * Unified stagewise gradient boosting (`bellows::stagewise_booster`)
+    parameterised over orthogonal policies:
+      - Second-order differentiable losses: squared residual, pseudo-Huber,
+        logistic Bernoulli, and multinomial deviance.
+      - Split cut policies: exact sorted midpoints (`exact_cut_policy`) and
+        histogram quantile buckets (`quantile_bin_policy`) with sibling
+        histogram subtraction.
+      - Tree topology growth policies: level-synchronous
+        (`depth_synchronous_growth`), best-gain priority frontier
+        (`best_gain_frontier_growth`), and balanced symmetric decision
+        tables (`oblivious_symmetric_growth`).
+      - Observation sampling policies: uniform sampling
+        (`uniform_full_sample`) and gradient-magnitude filtering
+        (`gradient_magnitude_filter`).
+      - First-class missing-value split routing and leakage-free ordered
+        target statistics (`with_ordered_categories`).
+  * Preprocessing and feature engineering: `moment_normaliser`,
+    `interval_rescaler`, `column_mender`, `indicator_expander`,
+    `ordered_target_encoder`, `quantile_bucketer`, `dispersion_filter`,
+    and `relevance_selector`.
+  * Classical estimators and ensembles: `penalised_linear_regressor`,
+    `penalised_logistic_classifier`, `proximity_learner`,
+    `gaussian_density_classifier`, `centroid_partitioner`, and
+    `subspace_tree_ensemble`.
+  * Composition and model selection: compile-time pipe chains (`|`),
+    runtime `dynamic_chain`, `fold_splitter`, `stratified_splitter`,
+    `cross_validate`, `parameter_sweep`, and composable evaluation metric
+    function objects.
+  * Versioned binary serialisation (`bellows::save_artifact`,
+    `bellows::load_artifact`) and zero-allocation single-row inference
+    (`bellows::infer_one`).
+
+Building, Testing, and Installing
+---------------------------------
+
+Bellows requires a C++20 compiler (such as `g++` 12 or later) and Make
+(or CMake 3.20+).
+
+To build the static and shared libraries (`libbellows.a`, `libbellows.so`),
+the CLI utilities (`bellows`, `bellows-train`, `bellows-infer`), and the
+test driver (`bellows-check`):
+
+    make all
+
+To run the complete unit, integration, CLI, and GNU style verification
+suite:
+
+    make check
+
+To install headers, libraries, `bellows.pc`, and binaries under `PREFIX`
+(default `/usr/local`):
+
+    make install PREFIX=/usr/local
+
+To remove all generated build artefacts:
+
+    make clean
+
+To create a source distribution archive (`bellows-0.1.0.tar.gz`):
+
+    make dist
+
+Command-Line Utilities
+----------------------
+
+All executables support `--help` and `--version`:
+
+  * `bellows`       — Inspect datasets, model artefacts, and run benchmarks.
+  * `bellows-train` — Fit a Bellows model from a CSV/tabular dataset and
+                      serialise a binary `.blws` artefact.
+  * `bellows-infer` — Load a binary `.blws` model artefact and generate
+                      predictions on new tabular observations.
+  * `bellows-check` — Execute the Bellows automated verification suite.
+
+License
+-------
+
+Bellows is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation, version 3 of the License (see `COPYING`).

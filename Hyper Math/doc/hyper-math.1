@@ -1,0 +1,87 @@
+.\" hyper-math.1 -- GNU man page for hyper-math CLI and libhypermath.
+.\" Copyright (C) 2026 Kival
+.\" Copying and distribution of this file, with or without modification,
+.\" are permitted in any medium without royalty provided the copyright
+.\" notice and this notice are preserved.
+.TH HYPER-MATH "1" "October 2026" "GNU Hyper Math 0.1.0" "User Commands"
+.SH NAME
+hyper-math \- Unified C++20 scientific computing & columnar data engine
+.SH SYNOPSIS
+.B hyper-math
+[\fI\,OPTION\/\fR]...
+.SH DESCRIPTION
+.B GNU Hyper Math
+(\fBlibhypermath\fR) is a clean-room C++20 library and command-line driver
+unifying the functionality of the Python scientific and data-science
+ecosystem (\fBNumPy\fR, \fBSciPy\fR, \fBPandas\fR, and \fBPolars\fR) under
+the GNU Coding Standards and GNU General Public License v3 or later.
+.PP
+When invoked with no options or with \fB\-\-demo\fR, \fBhyper-math\fR runs a
+comprehensive demonstration across all four architectural pillars:
+.IP "1." 4
+\fBHyper-Lattice N-D Tensor Engine\fR (\fchyper_math::tensor\fR):
+64-byte cache-line aligned \fBslab_buffer<T>\fR, zero-copy affine
+\fBlattice_descriptor\fR slicing/transposition/broadcasting, lazily fused
+expression templates, Einstein summation (\fBeinsum\fR), \fB.npy\fR binary
+I/O, and multi-threaded contractions.
+.IP "2." 4
+\fBScientific Numerical Continuum\fR (\fchyper_math::scientific\fR):
+LU/Cholesky/QR/SVD/Schur/Eigenvalue/Sylvester solvers, Radix-2 & Bluestein
+Chirp-Z arbitrary-\fIN\fR FFT/DCT, Gauss-Kronrod G7-K15 adaptive integration,
+Dormand-Prince RK4(5) ODE solver, BFGS/L-BFGS-B/Nelder-Mead/Levenberg-Marquardt
+& Simplex \fBlinprog\fR optimizers, IIR/FIR digital filters (\fBfiltfilt\fR,
+\fBwelch\fR), CSR sparse solvers, \fIk\fR-d trees, and statistical hypothesis
+testing / KDE / PCA.
+.IP "3." 4
+\fBDual-Bitmask Columnar Tabular Engine\fR (\fchyper_math::tabular\fR):
+64-bit word-aligned \fBvalidity_bitmap\fR with hardware \fBstd::popcount\fR,
+O(1) hash-indexed \fBindex_axis\fR, index-aligned \fBseries\fR arithmetic,
+rolling/EWM windows, ISO-8601 \fB.dt\fR accessors, multi-column & \fBasof\fR
+joins, pivot/melt/crosstab, and CSV / NDJSON / \fB.hmb\fR binary I/O.
+.IP "4." 4
+\fBDeclarative Lazy Query Optimizer\fR (\fchyper_math::tabular::lazy_frame\fR):
+Expression AST (\fBcol\fR, \fBlit\fR, \fBwhen\fR, \fBover\fR) with constant
+folding, filter fusion, predicate pushdown, dead-column elimination, and
+projection pushdown.
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-demo\fR
+Run the interactive multi-pillar scientific and tabular showcase (default).
+.TP
+\fB\-r\fR, \fB\-\-repl\fR
+Launch the interactive Read-Eval-Print Loop shell (\fBhyper-math>\fR).
+.TP
+\fB\-c\fR, \fB\-\-csv\fR=\fIFILE\fR
+Load a CSV file and display its first 10 rows and \fBdescribe()\fR summary.
+.TP
+\fB\-j\fR, \fB\-\-ndjson\fR=\fIFILE\fR
+Load an NDJSON file and display its first 10 rows and \fBdescribe()\fR summary.
+.TP
+\fB\-e\fR, \fB\-\-eval\fR=\fICMD\fR
+Evaluate a scientific or SQL command (\fBroots\fR, \fBhilbert\fR, \fBsvd\fR,
+\fBfft\fR, \fBstats\fR, \fBgrad\fR, \fBquad\fR, \fBode\fR, \fBqmc\fR,
+\fBsql\fR, \fBconstants\fR).
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display help information and exit.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Display version and GPLv3+ license notice and exit.
+.SH FILES
+.TP
+.I /usr/local/include/hyper_math/hyper_math.hpp
+Master C++20 umbrella header.
+.TP
+.I /usr/local/lib/libhypermath.a
+Static library archive.
+.TP
+.I /usr/local/lib/pkgconfig/hyper-math.pc
+\fBpkg-config\fR metadata file.
+.SH REPORTING BUGS
+Report bugs to <bug-hyper-math@gnu.org>.
+.SH COPYRIGHT
+Copyright \(co 2026 Kival.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

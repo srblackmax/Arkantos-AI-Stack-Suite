@@ -1,0 +1,34 @@
+================================================================================
+SUTRA — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Sutra Agent & LLM Runtime (Layer 8 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Sutra
+Dependencies:
+  - C++23 compiler (GCC 14+) and g++-13 (for CUDA nvcc host compiler)
+  - CUDA Toolkit 12.x
+  - llama.cpp built as a shared library at $HOME/llama.cpp/build/bin/libllama.so
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Sutra"
+  cmake --preset release -DSUTRA_LLAMACPP_ROOT="$HOME/llama.cpp"
+  cmake --build build-release -j$(nproc)
+
+2. RUN TEST SUITE (Unit, Property, Stress, GNU Style)
+-----------------------------------------------------
+  ctest --test-dir build-release --output-on-failure
+
+3. INSTALL TO ~/.local
+----------------------
+  cmake --install build-release --prefix "$HOME/.local"
+
+4. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release           : Optimized Release build with llama.cpp + CUDA
+  - debug             : Debug build
+  - release-asan      : Release + AddressSanitizer & UBSan
+  - release-tsan      : Release + ThreadSanitizer
+  - release-cuda      : Release + CUDA 12.x kernels
+  - release-headless  : CPU-only Release build

@@ -1,0 +1,19 @@
+================================================================================
+STACK TEST — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Suite: Cross-Library Integration Test Suite (Hyper Math -> Sutra/Yantra/Darshana)
+Location: $HOME/AI/Arkantos/Stack Test/stack-integration
+Dependencies: All stack libraries built and installed in ~/.local
+
+1. CONFIGURE & COMPILE
+----------------------
+  cd "$HOME/AI/Arkantos/Stack Test/stack-integration"
+  cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH="$HOME/.local"
+  cmake --build build -j$(nproc)
+
+2. RUN INTEGRATION TESTS
+------------------------
+  ctest --test-dir build --output-on-failure

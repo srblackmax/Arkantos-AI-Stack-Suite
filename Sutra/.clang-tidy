@@ -1,0 +1,6 @@
+---
+Checks: '-*,cppcoreguidelines-*,modernize-*'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/sutra/.*|src/.*'
+FormatStyle: file
+...

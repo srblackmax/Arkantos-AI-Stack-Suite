@@ -1,0 +1,33 @@
+================================================================================
+YANTRA — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Yantra MLOps, WAL, HNSW, ModelRegistry & DAG Engine (Layer 7)
+Location: $HOME/AI/Arkantos/Yantra
+Dependencies:
+  - C++23 compiler (GCC 14+) and g++-13 (for CUDA nvcc host compiler)
+  - CUDA Toolkit 12.x (or pass -DYANTRA_ENABLE_CUDA=OFF / preset release-headless)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Yantra"
+  cmake --preset release
+  cmake --build build-release -j$(nproc)
+
+2. RUN TEST SUITE (Unit, Property, Stress, GNU Style)
+-----------------------------------------------------
+  ctest --test-dir build-release --output-on-failure
+
+3. INSTALL TO ~/.local
+----------------------
+  cmake --install build-release --prefix "$HOME/.local"
+
+4. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release           : Optimized Release build with CUDA acceleration
+  - debug             : Debug build
+  - release-asan      : Release + AddressSanitizer & UBSan
+  - release-tsan      : Release + ThreadSanitizer
+  - release-cuda      : Release + native CUDA kernels
+  - release-headless  : CPU-only Release build (-DYANTRA_ENABLE_CUDA=OFF)

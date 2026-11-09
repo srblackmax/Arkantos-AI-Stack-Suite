@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(@YANTRA_ENABLE_CUDA_BOOL@)
+  find_dependency(CUDAToolkit)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/YantraTargets.cmake")
+
+check_required_components(Yantra)

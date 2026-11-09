@@ -1,0 +1,33 @@
+================================================================================
+BELLOWS — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Bellows (Layer 2 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Bellows
+Dependencies: Hyper Math (built and installed in ~/.local or ../Hyper Math)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Release Build)
+--------------------------------------------
+  cd "$HOME/AI/Arkantos/Bellows"
+  cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
+    -DHYPER_MATH_DIR="$HOME/AI/Arkantos/Hyper Math"
+  cmake --build build -j$(nproc)
+
+2. RUN TESTS
+------------
+  ./build/bellows-check
+
+3. RUN BENCHMARKS (Optional)
+----------------------------
+  ./build/bench-bellows
+
+4. INSTALL TO ~/.local
+----------------------
+  cmake --install build --prefix "$HOME/.local"
+
+  # Populate ./lib for sibling CMake discovery:
+  mkdir -p lib
+  cp -a build/libbellows* lib/

@@ -1,0 +1,132 @@
+## Antigravity Prompt — Sutra: C++23 Agent Orchestration Framework (Production-Grade, Zero Python)
+
+**Context.** **Sutra** (Sanskrit: *thread*; the thread that binds) is a native C++23 library that serves as a high-performance rival to LangChain, LlamaIndex, PydanticAI, CrewAI, and AutoGen. The reference hardware is an Intel i7-12700K (8 P-cores, 4 E-cores, AVX-512) and an NVIDIA RTX 3070 (8 GB VRAM). The entire stack must be C++—no Python wrappers, no pybind11, no transliteration artifacts. Sutra is a sibling library to **Surya** (the CV library); the two must not share headers or build targets beyond a common CMake toolchain file.
+
+**Core Objective.** Build the Sutra agent orchestration framework to match or exceed the functional surface of the Python incumbents while exploiting C++'s memory model, concurrency primitives, and type system to eliminate their systemic performance pathologies. Treat production readiness as a formal deliverable: deterministic resource lifetime, observable failure modes, and reproducible builds.
+
+### 1. Architectural Mandate (Non-Negotiable)
+
+Sutra must be built around the following architectural pillars, derived from convergence patterns observed across the major Python agent frameworks:
+
+- **Tool Registration (Function-as-Tool with JSON Schema):** All major frameworks use a function + decorator + schema pattern for tool registration, with MCP (Model Context Protocol) emerging as the cross-framework interop layer. Sutra must use compile-time reflection (where available) or a registration macro to generate JSON Schema from function signatures, without runtime type erasure. Provide a `sutra::ToolRegistry` that validates schemas at compile time where possible, and at initialization time otherwise.
+- **Three-Tier Memory:** Every framework implements short-term (conversation buffer), long-term (persistent cross-session), and semantic (vector-indexed retrieval) memory. Implement each tier in Sutra as a distinct, replaceable component. The short-term tier must use a fixed-capacity ring buffer; the semantic tier must interface with a C++ vector index (AVX-512-accelerated dot products on the i7-12700K).
+- **Orchestration Topology (Choose One, Excel at It):** Python frameworks diverge primarily on orchestration: LangGraph uses directed graphs, CrewAI uses role-based crews, AutoGen uses conversation-based patterns. Sutra selects **directed graph orchestration** as its primary topology (most general and composable). Implement `sutra::WorkflowGraph` with nodes as agent/tool stages and edges as data dependencies. Provide a `sutra::PlanLinter` that validates the graph (cycle detection, dangling dependencies, schema compatibility) before execution, catching structural failures at compile/init time rather than runtime.
+- **Planning Strategy:** ReAct is the default planning strategy in most frameworks. Sutra implements ReAct as the baseline, with plan-and-execute as an optional strategy. The planner must be a separate, swappable component behind a `sutra::Planner` interface.
+
+### 2. Elimination of Python Framework Pathologies
+
+The Python frameworks exhibit systemic performance and architectural issues that Sutra must structurally prevent:
+
+- **O(N²) State Storage (LangChain's `__pregel_tasks`):** LangChain's agent state is inlined into every tool-dispatch message, causing quadratic storage growth (815 MB for a 500-turn run). **Sutra must never copy the full conversation state into tool invocations.** Pass a `sutra::ToolContext` handle that borrows the state via `std::span` or a lightweight proxy; never serialize or copy the message history.
+- **Sequential Tool Execution Bottleneck:** LangChain's sequential tool execution is 50–70% slower than parallel execution. **Sutra must default to parallel tool execution** for independent tool calls within a single planning step. Use `std::execution::par` or a dedicated thread pool, and enforce a configurable concurrency limit. Provide a `sutra::ToolScheduler` that analyzes tool-call dependencies and parallelizes where safe.
+- **Checkpoint I/O Latency Growth:** LangChain's end-to-end latency doubles over long runs (1.2 s/node to 2.5 s/node) due to checkpoint serialization of ever-growing state. **Sutra's checkpointing must be incremental**, serializing only the delta since the last checkpoint, and must use a binary format (e.g., FlatBuffers or Cap'n Proto) rather than JSON. Checkpoint writes must be asynchronous and must never block the agent loop.
+- **No Internal Locks, Undefined Concurrent Behavior:** The C++ Agentic Framework explicitly warns that concurrent `processQuery()` calls on the same agent instance corrupt conversation history because "there are no internal locks." **Sutra must provide explicit concurrency guarantees.** Either make agent instances thread-safe with fine-grained locking (reader-writer locks on history, lock-free queues for event dispatch) or make them explicitly single-threaded with a `static_assert`/runtime check that prevents concurrent use. Document the choice in `PRODUCTION.md`.
+
+### 3. Memory Management (Hard Rules)
+
+- Ban raw `new`/`delete` in all Sutra library code. Use `std::unique_ptr` for exclusive ownership, `std::shared_ptr` only where ownership is genuinely shared, and `std::pmr` monotonic/arena resources for per-inference scratch memory (tool schemas, intermediate results, prompt buffers).
+- Every public API must have documented allocation behavior and teardown behavior. If a function can fail to allocate, it must return `std::expected<T, sutra::AgentError>` (C++23), not throw across ABI boundaries.
+- All resource acquisition must be RAII. There must be zero manual cleanup paths.
+- Sutra's cold-start memory footprint must be under 20 MB (the Python incumbents start at ~158 MB; C++ alternatives achieve 11 MB).
+
+### 4. Concurrency & Asynchrony
+
+- Sutra must support N concurrent agent runs safely. Inference state must not be global. Global state (e.g., tool registry, model context) must be guarded by documented concurrency guarantees.
+- Provide a `sutra::AgentRuntime` object that manages a thread pool, a work-stealing queue for tool execution, and a completion queue for results. Users interact with high-level `run`/`run_async` APIs, not raw threads.
+- Tool execution must overlap with LLM inference by design. When the LLM is generating the next token, Sutra should be executing previously dispatched tools. Demonstrate this with a benchmark showing CPU utilization ≥ 70% during LLM inference stages.
+- No `std::mutex` in the hot path. Use lock-free SPSC/MPSC queues between the LLM inference thread and tool execution threads. Use `std::atomic` with appropriate memory ordering for state flags.
+- Sutra must compile cleanly under `-fsanitize=thread` (TSan) with zero race reports on the test suite.
+
+### 5. Error Handling (C++23 `std::expected`)
+
+- All fallible public APIs in Sutra must return `std::expected<T, sutra::AgentError>`.
+- `sutra::AgentError` must be a variant that distinguishes: **LLM errors** (connection, rate limit, context overflow), **Tool errors** (invalid input, execution failure, timeout), **Planning errors** (no valid plan, max steps exceeded), and **Framework errors** (resource exhaustion, configuration invalid).
+- Tool errors must never crash the agent. The error context must be sent back to the LLM for recovery; if the LLM cannot recover within `max_steps`, Sutra returns the last error as the result.
+- Every CUDA call (if GPU acceleration is used) must be wrapped in a `SUTRA_CUDA_CHECK` macro that returns a typed error and includes the CUDA error string. No silent failures.
+
+### 6. Coding Standards (GNU Coding Standards — Style Only)
+
+The entire Sutra codebase must follow the **GNU coding standards** for all aspects of coding style. These apply **solely to coding standards**—formatting, naming, commenting, error messages, and code organization within a file—and do **not** mandate the GNU build system (Autotools), GNU project structure, or GNU licensing. Sutra's build system remains CMake as specified below. Specifically:
+
+- **Formatting:** GNU-style indentation (2 spaces per level, braces on new lines), line length limits (79 columns recommended), consistent spacing around operators.
+- **Naming:** lower_case_with_underscores for variables and functions, UPPER_CASE for macros, CamelCase for types (per GNU C++ conventions).
+- **Comments:** Every function must have a comment describing purpose, parameters, return value, and side effects. Use GNU-style comment blocks (`/* ... */`) for file headers and function documentation; `//` for inline comments.
+- **Error messages:** Complete sentences, start with a capital letter, no trailing period. Informative, suggesting corrective action where possible.
+- **Code organization:** Group related functions, use forward declarations to minimize header dependencies, keep functions short and focused.
+- **Portability:** Avoid compiler-specific extensions in portable code; guard with feature test macros if absolutely necessary.
+- **Consistency:** The agent must enforce these rules uniformly across all generated Sutra code, and must run a style checker (`clang-format --dry-run --Werror` with a GNU-compatible configuration) as part of the verification loop.
+
+### 7. Testing & Autonomous Bug Detection (Antigravity's Continuous Verification Loop)
+
+**7.1. Unit & Integration Tests**
+- Every public Sutra API must have unit tests covering success paths, error paths (invalid tool name, malformed JSON, context overflow, tool timeout), and boundary conditions (empty input, max-length input, zero tools).
+- Integration tests must cover: a single ReAct loop with mock tools; a multi-node workflow with parallel branches; a long-running conversation exceeding 100 turns (to verify no memory growth).
+
+**7.2. Property-Based Tests**
+- Tool schema generation: for any function signature, the generated JSON Schema must be valid and round-trippable.
+- Plan validation: for any generated plan, the linter must reject cycles, dangling dependencies, and schema mismatches. Generate random graphs and assert that the linter's verdict matches an independent graph-theoretic check.
+- Memory tier isolation: operations on one Sutra memory tier must never mutate another tier.
+
+**7.3. Numerical & GPU/CPU Equivalence Tests**
+- If any numerical operations are offloaded to the GPU (e.g., vector similarity in the semantic memory tier), compare GPU results against a CPU reference implementation with documented tolerances (1e-6 for fp32).
+
+**7.4. Stress & Leak Tests**
+- **10,000 sequential agent runs** with no memory growth (validate with ASan/LSan and a memory delta check).
+- **1,000 concurrent agent runs** across 8 threads with no deadlocks, no data races (TSan), and no leaks.
+- **Long-running test:** 500-turn conversation with checkpointing enabled; verify that per-turn latency does not grow (contrast with LangChain's latency doubling).
+
+**7.5. Autonomous Bug-Hunting Protocol (Antigravity's Mandate)**
+- After generating any Sutra module, Antigravity must **immediately** run the following in sequence: `cmake --build --preset release-asan`, `ctest`, `clang-tidy` with `cppcoreguidelines-*` and `modernize-*`, `clang-format --dry-run --Werror` with GNU configuration, and `-fsanitize=thread`.
+- If any check fails, Antigravity must **diagnose the root cause** before applying a fix, and must **re-run the full suite** after the fix.
+- Antigravity must maintain `KNOWN_ISSUES.md` logging every bug found and fixed: the failing test case, the root cause, and the fix applied. This file is part of the deliverable.
+- Antigravity must not mark any Sutra task "complete" if the test suite has any failing test, any ASan/TSan report, any clang-tidy warning in new code, or any GNU style violation.
+
+### 8. Build & Packaging
+
+- CMake ≥ 3.28, Ninja generator, C++23 (`-std=c++23`, GCC 13+ or Clang 17+).
+- Provide `CMakePresets.json` with: `debug`, `release`, `release-asan`, `release-tsan`, `release-cuda`.
+- **Zero third-party dependencies in public headers** except the C++ standard library. If GPU acceleration is used, CUDA is a build dependency, not a header dependency—wrap CUDA types in opaque handles (`sutra::Stream`, `sutra::Tensor`) defined in the public header.
+- Install target must export a CMake config package **`SutraConfig.cmake`** with `find_dependency` for CUDA when GPU support is enabled.
+- Version the ABI from day one using inline namespaces (**`namespace sutra::v1`**). Document ABI stability policy.
+- Target name in CMake: `Sutra::Sutra` (namespace-qualified, standard for modern CMake packages).
+
+### 9. Observability
+
+- Structured logging via a pluggable sink interface (default: stderr, JSON-lines). No `std::cout`, no `printf`, no `std::endl`.
+- Per-stage timing counters (planning, tool dispatch, LLM inference, tool execution, checkpoint write) exposed through a `sutra::AgentStats` object. Zero-cost when disabled via a compile-time flag.
+- A public `sutra::AgentProfiler` hook so users can attach Tracy/Perfetto/Nsight without recompiling.
+
+### 10. Documentation
+
+- Every public Sutra symbol must have a Doxygen comment with `@pre`, `@post`, `@returns` (for `std::expected`), and thread-safety notes. These comments must also satisfy GNU comment style (complete sentences, proper punctuation).
+- **`PRODUCTION.md`** (Sutra-specific): hardware requirements, concurrency model, error taxonomy, memory budgeting, and the exact procedure to reproduce the performance baseline on the reference hardware.
+- **`BENCHMARKS.md`** (Sutra-specific): cold-start latency, memory footprint, single-agent throughput, multi-agent parallel throughput, and 500-turn latency stability. Include a direct comparison table against the Python frameworks' published numbers where available (e.g., cold start: Sutra ~12 ms vs Python ~1800 ms).
+- **`README.md`**: one-paragraph pitch, the "thread that binds" naming rationale, and a 10-line quick-start example using a mock tool and a mock LLM.
+
+### 11. Definition of Done
+
+1. All tests pass under `release-asan` and `release-tsan` with zero reports.
+2. A 500-turn conversation runs with **flat per-turn latency** (no growth), proving the elimination of LangChain's checkpoint I/O pathology.
+3. Tool execution is parallelized; a benchmark with 10 independent tools shows ≥ 3× speedup over sequential execution.
+4. Cold-start memory footprint ≤ 20 MB and cold-start latency ≤ 50 ms on the reference hardware.
+5. `clang-tidy` passes with `cppcoreguidelines-*` and `modernize-*` clean on all Sutra library code, **and** `clang-format --dry-run --Werror` with GNU configuration reports zero violations.
+6. `KNOWN_ISSUES.md` exists and documents the bug-hunting history.
+7. `PRODUCTION.md` and `BENCHMARKS.md` exist and match reality on the reference hardware.
+8. A fresh clone of the Sutra repository builds with `cmake --preset release && cmake --build --preset release` on a clean machine with no manual steps.
+9. `SutraConfig.cmake` is installed and a downstream consumer project can link against `Sutra::Sutra` with a one-line `target_link_libraries`.
+
+### 12. Anti-Patterns (Must Be Absent)
+
+- `std::endl`, `printf`, `cout` in Sutra library code.
+- `new`/`delete` outside allocator implementations.
+- Copying the full conversation state into every tool invocation (the LangChain O(N²) pathology).
+- Sequential execution of independent tools without an explicit opt-in to sequential mode.
+- Checkpoint serialization that is synchronous or that blocks the agent loop.
+- Any `.py` file, any Python-generated code, any transliteration artifacts (camelCase from Python, `std::any` used as a `**kwargs` shim).
+- Blanket `#pragma omp parallel for` without a schedule clause or without demonstrating it beats a tuned thread pool on the reference hardware.
+- Public APIs that can throw across the ABI boundary.
+- Internal locks that silently corrupt state under concurrent use (the "no internal locks" warning).
+- Violations of GNU coding style (inconsistent indentation, non-GNU naming, missing function comments).
+- Any naming inconsistency with the `sutra` / `sutra::v1` / `Sutra::Sutra` / `SutraConfig.cmake` conventions above.
+
+---

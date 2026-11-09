@@ -1,0 +1,15 @@
+{
+  "run_id": "sphinx_aliveness",
+  "router_accuracy_pct_min": 90.0,
+  "router_p50_ms_max": 50.0,
+  "router_p99_ms_max": 100.0,
+  "ttfs_chat_p50_ms_max": 700.0,
+  "ttfs_chat_p99_ms_max": 1000.0,
+  "ttfs_task_p50_ms_max": 1500.0,
+  "ttfs_task_p99_ms_max": 2500.0,
+  "barge_in_max_ms_max": 200.0,
+  "backchannel_ms_max": 500.0,
+  "audio_continuity_max_gap_ms_max": 100.0,
+  "idle_cpu_pct_max": 5.0,
+  "darshana_svg_ms_max": 500.0
+}

@@ -1,0 +1,39 @@
+================================================================================
+HYPER MATH — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Hyper Math (Layer 1 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Hyper Math
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Release Build)
+--------------------------------------------
+  cd "$HOME/AI/Arkantos/Hyper Math"
+  cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+  cmake --build build -j$(nproc)
+
+2. RUN UNIT & PROPERTY TESTS
+----------------------------
+  ctest --test-dir build --output-on-failure
+
+3. RUN BENCHMARKS (Optional)
+----------------------------
+  ./build/bench-hyper-math
+
+4. INSTALL TO ~/.local
+----------------------
+  cmake --install build --prefix "$HOME/.local"
+
+  # Copy built libraries into ./lib so downstream sibling builds (Bellows/Surya)
+  # can also locate them directly in the source tree if needed:
+  mkdir -p lib
+  cp -a build/libhypermath* lib/
+
+5. ALTERNATIVE: GNU MAKEFILE BUILD
+----------------------------------
+  ./configure --prefix="$HOME/.local"
+  make -j$(nproc)
+  make check
+  make install

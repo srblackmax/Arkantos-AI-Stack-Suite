@@ -1,0 +1,71 @@
+/*
+ * Copyright (C) 2026 Kival
+ * This file is part of the Arkantos AI Stack Suite.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef OBSIDIAN_VERSION_H
+#define OBSIDIAN_VERSION_H
+
+/**
+ * @file version.h
+ * @brief Compile-time and runtime version query declarations for Obsidian.
+ */
+
+#define OBSIDIAN_VERSION_MAJOR @OBSIDIAN_VERSION_MAJOR@
+#define OBSIDIAN_VERSION_MINOR @OBSIDIAN_VERSION_MINOR@
+#define OBSIDIAN_VERSION_PATCH @OBSIDIAN_VERSION_PATCH@
+#define OBSIDIAN_VERSION_STRING "@OBSIDIAN_VERSION_STRING@"
+
+#ifdef __cplusplus
+namespace obsidian
+{
+
+/**
+ * @brief Return the human-readable semantic version string of Obsidian.
+ * @pre None.
+ * @complexity O(1) time and O(1) space.
+ */
+const char *
+version_string (void) noexcept;
+
+/**
+ * @brief Return the major version number of Obsidian.
+ * @pre None.
+ * @complexity O(1) time and O(1) space.
+ */
+int
+version_major (void) noexcept;
+
+/**
+ * @brief Return the minor version number of Obsidian.
+ * @pre None.
+ * @complexity O(1) time and O(1) space.
+ */
+int
+version_minor (void) noexcept;
+
+/**
+ * @brief Return the patch version number of Obsidian.
+ * @pre None.
+ * @complexity O(1) time and O(1) space.
+ */
+int
+version_patch (void) noexcept;
+
+} /* namespace obsidian */
+#endif /* __cplusplus */
+
+#endif /* OBSIDIAN_VERSION_H */

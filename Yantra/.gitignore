@@ -1,0 +1,17 @@
+build
+build-*/
+benchmarks/data/
+install-verify*/
+*.o
+*.so
+*.so.*
+*.a
+build/
+*.lo
+*.la
+*.db
+*.wal
+*.hnsw
+*.gguf
+*.onnx
+polymath_cognitive_architecture.md

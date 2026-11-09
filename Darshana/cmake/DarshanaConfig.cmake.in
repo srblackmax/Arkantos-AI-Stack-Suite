@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(@DARSHANA_ENABLE_VULKAN_BOOL@)
+  find_dependency(Vulkan)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/DarshanaTargets.cmake")
+
+check_required_components(Darshana)

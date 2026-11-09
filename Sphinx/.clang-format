@@ -1,0 +1,10 @@
+BasedOnStyle: GNU
+Language: Cpp
+Standard: c++20
+ColumnLimit: 79
+IndentWidth: 2
+UseTab: Never
+NamespaceIndentation: None
+BreakBeforeBraces: GNU
+AlwaysBreakTemplateDeclarations: MultiLine
+SortIncludes: CaseSensitive

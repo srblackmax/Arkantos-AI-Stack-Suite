@@ -1,0 +1,289 @@
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* src/core/random.cpp (Random_Generator): Replace strict-aliasing
+	`reinterpret_cast` with `hyper_math::random_engine::get_state` and
+	`set_state`.
+	* src/data/data.cpp (Mmap_Dataset::Mmap_Dataset, Mmap_Dataset::get):
+	Add header and payload bounds validation against truncated or corrupt
+	files and use `std::memcpy` for unaligned scalar reads.
+	* include/basalt/loss.hpp (huber_loss, cosine_embedding_loss,
+	Huber_Loss, Cosine_Embedding_Loss): Declare Huber and Cosine Embedding
+	losses.
+	* src/loss/loss.cpp (NLL_Loss_Backward::apply, nll_loss,
+	cross_entropy_loss, huber_loss, cosine_embedding_loss): Stage CUDA
+	tensors in bulk during `nll_loss` forward/backward, mask ignored
+	targets under label smoothing in `cross_entropy_loss`, and implement
+	`huber_loss` and `cosine_embedding_loss`.
+	* src/trainer/trainer.cpp (Trainer::fit, Trainer::validate,
+	Trainer::test): Stream batches via `Data_Loader::for_each_batch`
+	instead of materializing epochs in RAM via `collect_epoch`, and support
+	`Reduce_LR_On_Plateau` in `Trainer::fit (nn::Module &, ...)`.
+	* include/basalt/scheduler.hpp (Exponential_LR, Multi_Step_LR):
+	Declare exponential and multi-milestone learning-rate schedulers.
+	* src/optim/scheduler.cpp (Exponential_LR, Multi_Step_LR): Implement
+	`Exponential_LR` and `Multi_Step_LR`.
+	* include/basalt/functional.hpp (conv_transpose2d, cosine_similarity):
+	Declare 2-D transposed convolution and cosine similarity.
+	* src/nn/functional.cpp (Conv_Transpose2d_Backward, conv_transpose2d,
+	cosine_similarity): Implement `conv_transpose2d` with `matmul` +
+	`col2im`/`im2col` autograd and `cosine_similarity`.
+	* include/basalt/nn.hpp (Conv_Transpose2d, Instance_Norm,
+	Instance_Norm1d, Instance_Norm2d, Instance_Norm3d): Declare transposed
+	2-D convolution and instance normalization modules.
+	* src/nn/nn.cpp (Conv_Transpose2d, Instance_Norm): Implement
+	`Conv_Transpose2d` and `Instance_Norm`.
+	* src/cli/basalt_train.cpp (main, print_help): Add `-d, --device=DEV`
+	CLI option.
+	* tests/test_phase4_nn.cpp, tests/test_phase5_optim.cpp: Add unit
+	tests for `Conv_Transpose2d`, `Instance_Norm2d`, `cosine_similarity`,
+	`Exponential_LR`, `Multi_Step_LR`, `Huber_Loss`,
+	`Cosine_Embedding_Loss`, and smoothed `cross_entropy_loss` with
+	`ignore_index`.
+	* doc/basalt-dl.texi, NEWS: Document and index new modules, losses,
+	functional ops, and schedulers.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* src/bellows-compat/bellows_bridge.hpp (Cuda_Runtime_Driver): Add
+	Ampere Tensor Core `cublas_gemm_half` and `cublas_gemm_half_batched`
+	(`cublasGemmEx`, `cublasGemmStridedBatchedEx`) and NVRTC GPU kernels
+	for `softmax` fwd/bwd, `layer_norm` fwd, `sum_last`, `sgd_step`, and
+	`adam_step`.
+	* src/bellows-compat/bellows_bridge.cpp (Cuda_Runtime_Driver):
+	Implement NVRTC PTX compilation and launch helpers for GPU reductions,
+	normalizations, and optimizer updates, plus FP16/BF16 Tensor Core GEMMs.
+	* include/basalt/tensor.hpp (Tensor::narrow): Add inline slice helper.
+	* src/tensor/tensor.cpp (Tensor::to): Add fast contiguous Float32 <->
+	Float16 and Float32 <-> BFloat16 conversion loops.
+	* src/tensor/ops.cpp (sum, softmax, Softmax_Last_Dim_Backward::apply,
+	matmul): Dispatch to NVRTC GPU kernels and Ampere Tensor Core FP16/BF16
+	GEMMs.
+	* src/optim/optim.cpp (SGD::step, Adam::step, AdamW::step,
+	clip_grad_norm_): Dispatch to fused NVRTC GPU optimizer kernels and
+	vectorized CPU `float *__restrict__` updates.
+	* src/amp/amp.cpp (Grad_Scaler::unscale_): Add raw-pointer `float *`
+	fast path for gradient unscaling and finiteness detection.
+	* include/basalt/functional.hpp (apply_rotary_pos_emb): Declare RoPE
+	functional helper.
+	* src/nn/functional.cpp (Conv3d_Backward::apply, max_pool3d,
+	avg_pool3d, layer_norm, Flash_Attention_Backward,
+	scaled_dot_product_attention, apply_rotary_pos_emb): Add `im2col` +
+	GEMM + `col2im` 3D convolution backward, parallel raw-pointer 3D
+	pooling, CUDA `layer_norm` dispatch, online-softmax
+	`Flash_Attention_Backward`, and `apply_rotary_pos_emb`.
+	* include/basalt/nn.hpp (RNN, LSTM, GRU, Rotary_Embedding, RoPE,
+	KV_Cache): Declare recurrent sequence models, Rotary Position
+	Embedding, and autoregressive key-value cache.
+	* src/nn/nn.cpp (RNN, LSTM, GRU, Rotary_Embedding, KV_Cache):
+	Implement recurrent layers, RoPE, and KV_Cache.
+	* tests/test_phase4_nn.cpp (test_recurrent_rope_and_kv_cache): Add
+	tests for RNN, LSTM, GRU, Rotary_Embedding, KV_Cache, and
+	Flash_Attention_Backward.
+	* bench/bench_basalt.cpp (main): Add RTX 3070 FP16 Tensor Core
+	2048x2048 GEMM benchmark.
+	* doc/basalt-dl.texi: Document `narrow`, `apply_rotary_pos_emb`, `RNN`,
+	`LSTM`, `GRU`, `Rotary_Embedding`, `RoPE`, and `KV_Cache`.
+	* NEWS: Record updated CPU and RTX 3070 Tensor Core benchmark results.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* src/bellows-compat/bellows_bridge.hpp (Cuda_Unary_Op, Cuda_Binary_Op,
+	Cuda_Runtime_Driver, Bellows_Storage): Add runtime-loaded cuBLAS
+	(`cublasSgemm_v2`, `cublasSgemmStridedBatched`), NVRTC JIT PTX kernel
+	compilation, lazy GPU synchronization (`sync_if_busy`), and power-of-2
+	caching memory pools for both CPU slabs and CUDA unified memory.
+	* src/bellows-compat/bellows_bridge.cpp (Cpu_Slab_Pool,
+	Cuda_Runtime_Driver): Implement zero-allocation slab recycling and
+	hardware RTX 3070 execution via `libcuda.so.1`, `libcublas.so.12`, and
+	`libnvrtc.so.12`.
+	* src/tensor/tensor.cpp (Tensor::clone, Tensor::fill_, Tensor::copy_,
+	Tensor::add_, Tensor::mul_): Add 2D/3D/4D strided fast paths, in-place
+	raw-pointer fast paths, and CUDA JIT fill dispatch.
+	* src/tensor/ops.cpp (unary_kernel, binary_kernel, sum, softmax, gelu,
+	matmul): Add CUDA JIT unary/binary/broadcast dispatch, row/column
+	broadcast fast paths, fused `softmax` and `gelu`, cuBLAS SGEMM dispatch,
+	and 4x16 register-blocked AVX2/FMA GEMM microkernels.
+	* src/nn/functional.cpp (Conv3d_Backward::apply, conv3d,
+	Layer_Norm_Backward::apply, layer_norm,
+	scaled_dot_product_attention): Add `im2col` + GEMM convolution forward,
+	parallel raw-pointer convolution backward, fused single-pass
+	`layer_norm` forward/backward, and online-softmax FlashAttention.
+	* Makefile.am (AM_CXXFLAGS, AM_CFLAGS): Enable `-O3 -march=native
+	-funroll-loops -fopenmp`.
+	* bench/bench_basalt.cpp (main): Add RTX 3070 CUDA 1024x1024 fp32
+	matmul benchmark.
+	* NEWS: Record updated i7-12700K CPU and RTX 3070 CUDA benchmark results.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* src/tensor/tensor_internal.hpp (Tensor::Impl): Cache numel and
+	is_contiguous flags; add O(1) contiguous fast path in
+	linear_to_strided_offset and unroll 1D/2D/3D index calculations.
+	* src/tensor/tensor.cpp (Tensor::read_scalar_at,
+	Tensor::write_scalar_at): Add contiguous raw-pointer fast paths.
+	* src/tensor/ops.cpp (unary_kernel, binary_kernel, matmul): Add
+	contiguous Float32 SIMD/multi-threaded raw-pointer fast paths and
+	coalesce transposed views in matmul.
+	* src/nn/functional.cpp (conv3d): Add multi-threaded contiguous
+	Float32 raw-pointer convolution kernel.
+	* Makefile.am (AM_CXXFLAGS, AM_CFLAGS): Enable -O3 optimization.
+	* NEWS: Record updated native C++20 benchmark results.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/basalt.hpp: New umbrella C++20 header.
+	* include/basalt/basalt_c.h (basalt_tensor_create, basalt_mlp_create,
+	basalt_last_error): New stable C ABI header for libbasalt-c.
+	* src/c_api/basalt_c.cpp (basalt_tensor_create, basalt_tensor_backward,
+	basalt_mlp_train_step): New C ABI implementation.
+	* src/cli/basalt_train.cpp (main): New CLI training utility implementing
+	getopt_long, --help, --version, --verbose, --quiet, and --dry-run.
+	* src/cli/basalt_inspect.cpp (main): New CLI artifact inspection tool.
+	* src/cli/basalt_convert.cpp (main): New CLI format conversion tool.
+	* python/basalt/__init__.py: New Python package initializer.
+	* python/basalt/_basalt.cpp (PYBIND11_MODULE): New optional pybind11
+	bindings.
+	* examples/mlp_xor.cpp (main): New non-linear XOR training example.
+	* bench/bench_basalt.cpp (main): New benchmark suite.
+	* doc/basalt-dl.texi: Complete Texinfo Reference Manual with tutorial,
+	internals, and indexed API reference.
+	* tests/test_phase9_c_api.c (main): New pure C test suite for
+	libbasalt-c.
+	* tests/test_cli.sh: New CLI integration test script.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/distributed.hpp (Data_Parallel, scatter, gather,
+	all_reduce_gradients, broadcast_parameters): New multi-device
+	data-parallel training header.
+	* src/distributed/distributed.cpp (Data_Parallel::parallel_step): New
+	implementation over Bellows parallel_for.
+	* include/basalt/logging.hpp (Logger, Console_Logger, CSV_Logger,
+	JSON_Lines_Logger, Memory_Logger): New pluggable experiment loggers.
+	* include/basalt/callbacks.hpp (Callback, Early_Stopping,
+	Model_Checkpoint, LR_Monitor): New lifecycle callback abstractions.
+	* include/basalt/trainer.hpp (Trainable_Module, Trainer_Config,
+	Trainer): New Lightning-style Trainer interface.
+	* src/trainer/trainer.cpp (Trainer::fit, Trainer::validate,
+	Trainer::test): New implementation with AMP, gradient accumulation,
+	checkpoint resume, and multi-device Data_Parallel support.
+	* tests/test_phase8_trainer.cpp (main): New Phase 8 end-to-end training
+	and multi-device equivalence test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/serialization.hpp (Checkpoint, save_checkpoint,
+	load_checkpoint, save_safetensors, load_safetensors, export_onnx,
+	import_onnx_weights, inspect_artifact): New serialization header.
+	* src/io/serialization.cpp (save_checkpoint, load_checkpoint,
+	save_safetensors, load_safetensors, export_onnx, import_onnx_weights):
+	New implementation using bellows::compute_fnv1a_checksum, Safetensors
+	JSON framing, and ONNX binary Protobuf wire encoding.
+	* tests/test_phase7_serialization.cpp (main): New Phase 7 round-trip
+	serialization test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/data.hpp (Dataset, Tensor_Dataset, Tabular_Dataset,
+	Mmap_Dataset, Transform, Data_Loader): New data pipeline header.
+	* src/data/data.cpp (Tabular_Dataset, Mmap_Dataset,
+	Data_Loader::collect_epoch): New implementation bridging
+	bellows::moment_normaliser, POSIX mmap, and deterministic worker
+	prefetching.
+	* include/basalt/amp.hpp (Autocast_Mode, Autocast_Guard, Grad_Scaler):
+	New automatic mixed-precision header.
+	* src/amp/amp.cpp (Autocast_Guard, Grad_Scaler::step): New
+	implementation.
+	* tests/test_phase6_data_amp.cpp (main): New Phase 6 test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/loss.hpp (mse_loss, l1_loss, smooth_l1_loss, nll_loss,
+	cross_entropy_loss, bce_with_logits_loss, kl_div_loss): New numerically
+	stable loss functions and Modules.
+	* src/loss/loss.cpp: New implementation.
+	* include/basalt/metrics.hpp (mean_squared_error, accuracy,
+	top_k_accuracy, balanced_f1_score, roc_auc_score, perplexity,
+	Metric_Tracker): New evaluation metrics header.
+	* src/metrics/metrics.cpp: New implementation wrapping Bellows metrics.
+	* include/basalt/optim.hpp (Optimizer, SGD, Adam, AdamW, RMSprop,
+	Adagrad, LAMB, clip_grad_norm_, clip_grad_value_): New optimizers.
+	* src/optim/optim.cpp: New implementation.
+	* include/basalt/scheduler.hpp (LR_Scheduler, Step_LR,
+	Cosine_Annealing_LR, One_Cycle_LR, Linear_Warmup_LR,
+	Reduce_LR_On_Plateau): New learning-rate schedulers.
+	* src/optim/scheduler.cpp: New implementation.
+	* tests/test_phase5_optim.cpp (main): New Phase 5 test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/functional.hpp (linear, conv1d, conv2d, conv3d,
+	max_pool2d, avg_pool2d, batch_norm, layer_norm, group_norm, rms_norm,
+	dropout, embedding, scaled_dot_product_attention): New stateless
+	functional API.
+	* src/nn/functional.cpp: New differentiable implementation.
+	* include/basalt/nn.hpp (Module, Sequential, Linear, Conv1d, Conv2d,
+	Conv3d, Batch_Norm, Layer_Norm, Group_Norm, RMS_Norm,
+	Multihead_Attention, Transformer_Encoder, Transformer_Decoder): New
+	neural network module hierarchy and initializers.
+	* src/nn/nn.cpp: New implementation using hyper_math::scientific::linalg
+	for orthogonal QR initialization.
+	* tests/test_phase4_nn.cpp (main): New Phase 4 test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/autograd.hpp (Autograd_Node, Saved_Variable,
+	No_Grad_Guard, Enable_Grad_Guard, backward, grad, checkpoint,
+	gradcheck, gradgradcheck): New dynamic reverse-mode and higher-order
+	automatic differentiation header.
+	* src/autograd/autograd.cpp (backward, grad, gradcheck): New topological
+	reverse-mode engine implementation.
+	* tests/test_phase3_autograd.cpp (main): New Phase 3 test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* include/basalt/tensor.hpp (Tensor, Tensor_Options, from_bellows_table,
+	to_bellows_table): New strided N-dimensional tensor class.
+	* src/tensor/tensor_internal.hpp: New internal tensor metadata helpers.
+	* src/tensor/tensor.cpp (Tensor::view, Tensor::transpose, Tensor::slice,
+	Tensor::expand): New implementation.
+	* include/basalt/ops.hpp (add, sub, mul, div, matmul, bmm, sum, mean,
+	softmax, log_softmax, cat, stack, split, chunk): New differentiable
+	tensor operations header.
+	* src/tensor/ops.cpp: New implementation with reverse-mode and
+	higher-order autograd nodes.
+	* tests/test_phase2_tensor.cpp (main): New Phase 2 test suite.
+
+2026-10-31  Kival  <Kival@basalt-dl.org>
+
+	* AUTHORS: New file.
+	* COPYING: New file (GPLv3).
+	* INSTALL: New file.
+	* NEWS: New file.
+	* README: New file.
+	* THANKS: New file.
+	* configure.ac: New Autoconf configuration with single-source version
+	propagation and Bellows discovery.
+	* Makefile.am: New Automake build specification.
+	* include/basalt/version.h.in: New generated header template.
+	* include/basalt/config.hpp: New file defining BASALT_API and macros.
+	* include/basalt/error.hpp (Basalt_Error): New exception hierarchy and
+	GNU diagnostic functions.
+	* src/core/error.cpp (report_diagnostic, report_tool_diagnostic): New
+	implementations.
+	* include/basalt/dtype.hpp (Dtype, Float16, BFloat16): New scalar type
+	system and 16-bit floating-point conversions.
+	* src/core/dtype.cpp (dtype_size, dtype_name, promote_dtypes): New
+	implementations.
+	* include/basalt/device.hpp (Device): New CPU/CUDA device descriptor.
+	* src/core/device.cpp (Device::parse, cuda_is_available): New
+	implementations.
+	* include/basalt/random.hpp (Random_Generator, seed_everything): New
+	deterministic PRNG interface over Bellows / Hyper Math.
+	* src/core/random.cpp (Random_Generator): New implementation.
+	* src/bellows-compat/bellows_bridge.hpp (Cuda_Runtime_Driver,
+	Bellows_Storage): New Bellows compatibility and runtime-loaded CUDA
+	driver adapter.
+	* src/bellows-compat/bellows_bridge.cpp: New implementation.
+	* tests/test_phase1_core.cpp: New Phase 1 test suite.
+	* tests/check_gnu_style.py: New GNU Coding Standards verifier.

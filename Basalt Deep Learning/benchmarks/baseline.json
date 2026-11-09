@@ -1,0 +1,96 @@
+{
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700K (12C/20T)",
+    "gpu": "NVIDIA GeForce RTX 3070 (8192 MiB GDDR6, Driver 550.163.01, CUDA 12.4)",
+    "kernel": "Linux 6.12.113+deb13-amd64 x86_64",
+    "ram": "48 GiB Dual-Channel DDR4",
+    "disk": "Samsung SSD 970 EVO Plus 1TB NVMe"
+  },
+  "timestamp": "2026-11-01T18:49:49Z",
+  "metrics": [
+    {
+      "name": "cpu_matmul_256x256_fp32_warm_p50_ms",
+      "value": 0.0899,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-cpu-matmul-256x256-fp32",
+      "sanity_check": { "passed": true, "details": "c[0]=-1.305456" }
+    },
+    {
+      "name": "cpu_matmul_256x256_fp32_warm_gflops",
+      "value": 373.2583,
+      "unit": "GFLOP/s (fp32 warm L2/L3)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#1-cpu-matmul-256x256-fp32",
+      "sanity_check": { "passed": true, "details": "33.55 MFLOP/call" }
+    },
+    {
+      "name": "cpu_conv2d_4x8x16x16_p50_ms",
+      "value": 0.0750,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#2-cpu-conv2d-forward",
+      "sanity_check": { "passed": true, "details": "out[0]=-0.032532" }
+    },
+    {
+      "name": "cpu_mlp_fwd_bwd_p50_ms",
+      "value": 0.1980,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#3-cpu-mlp-forward-backward",
+      "sanity_check": { "passed": true, "details": "loss=0.001253" }
+    },
+    {
+      "name": "cpu_transformer_enc_4x16x32_p50_ms",
+      "value": 0.3219,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#4-cpu-transformer-encoder",
+      "sanity_check": { "passed": true, "details": "loss=-0.021437" }
+    },
+    {
+      "name": "cuda_matmul_1024x1024_fp32_p50_ms",
+      "value": 0.2153,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-cuda-matmul-1024x1024",
+      "sanity_check": { "passed": true, "details": "c[0]=32.460686" }
+    },
+    {
+      "name": "cuda_matmul_1024x1024_fp32_gflops",
+      "value": 9974.2069,
+      "unit": "GFLOP/s (CUDA fp32 resident)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#5-cuda-matmul-1024x1024",
+      "sanity_check": { "passed": true, "details": "2.147 GFLOP/call" }
+    },
+    {
+      "name": "cuda_tensorcore_2048x2048_fp16_p50_ms",
+      "value": 0.4950,
+      "unit": "ms",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-cuda-tensorcore-fp16",
+      "sanity_check": { "passed": true, "details": "ch[0]=36.281250" }
+    },
+    {
+      "name": "cuda_tensorcore_2048x2048_fp16_gflops",
+      "value": 34709.2746,
+      "unit": "GFLOP/s (CUDA fp16 TensorCore resident)",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#6-cuda-tensorcore-fp16",
+      "sanity_check": { "passed": true, "details": "17.18 GFLOP/call" }
+    },
+    {
+      "name": "rss_bare_process_mb",
+      "value": 4.0000,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Bare process VmRSS at main() entry" }
+    },
+    {
+      "name": "rss_post_library_load_mb",
+      "value": 245.6758,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-CPU-library-load VmRSS (pre-CUDA)" }
+    },
+    {
+      "name": "rss_post_cuda_init_mb",
+      "value": 317.3945,
+      "unit": "MB",
+      "methodology_ref": "BENCHMARKS_METHODOLOGY.md#7-process-memory-rss-phases",
+      "sanity_check": { "passed": true, "details": "Post-CUDA/cuBLAS-init + 1 GPU frame + 1s idle VmRSS" }
+    }
+  ]
+}

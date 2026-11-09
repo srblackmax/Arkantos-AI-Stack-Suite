@@ -1,0 +1,37 @@
+================================================================================
+SURYA — COMMAND-LINE BUILD & INSTALL INSTRUCTIONS
+================================================================================
+
+Library: Surya Computer Vision (Layer 5 of the Sphinx C++23 Stack)
+Location: $HOME/AI/Arkantos/Surya
+Dependencies:
+  - Hyper Math, Bellows, Basalt Deep Learning, Obsidian
+  - System packages: libjpeg-dev, libpng-dev, libwebp-dev, libtiff-dev, zlib1g-dev
+  - Optional: CUDA Toolkit 12.x (release-cuda preset)
+Install Prefix: ~/.local
+
+1. CONFIGURE & COMPILE (CMake Preset Build)
+-------------------------------------------
+  cd "$HOME/AI/Arkantos/Surya"
+  cmake --preset release \
+    -DBELLOWS_ROOT="$HOME/AI/Arkantos/Bellows" \
+    -DHYPER_MATH_ROOT="$HOME/AI/Arkantos/Hyper Math" \
+    -DBASALT_ROOT="$HOME/AI/Arkantos/Basalt Deep Learning" \
+    -DOBSIDIAN_ROOT="$HOME/AI/Arkantos/Obsidian"
+  cmake --build build-release -j$(nproc)
+
+2. RUN TEST SUITE
+-----------------
+  ctest --test-dir build-release --output-on-failure
+
+3. INSTALL TO ~/.local
+----------------------
+  cmake --install build-release --prefix "$HOME/.local"
+
+4. AVAILABLE CMAKE PRESETS
+--------------------------
+  - release       : Optimized Release build (-O3)
+  - debug         : Debug build with symbols
+  - release-asan  : Release + AddressSanitizer & UBSan
+  - release-tsan  : Release + ThreadSanitizer
+  - release-cuda  : Release + CUDA 12.x GPU kernels

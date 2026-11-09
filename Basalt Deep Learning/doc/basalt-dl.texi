@@ -1,0 +1,725 @@
+\input texinfo    @c -*- texinfo -*-
+@c %**start of header
+@setfilename basalt-dl.info
+@settitle Basalt Deep Learning Reference Manual
+@documentencoding UTF-8
+@c %**end of header
+
+@copying
+This manual is for Basalt Deep Learning (version 0.1.0), a production-grade
+C++20 deep-learning library built on the Bellows machine-learning engine.
+
+Copyright @copyright{} 2026 Kival.
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU General Public License, Version 3 or any
+later version published by the Free Software Foundation.
+@end quotation
+@end copying
+
+@dircategory Software libraries
+@direntry
+* Basalt Deep Learning: (basalt-dl).   C++20 deep-learning framework.
+@end direntry
+
+@titlepage
+@title Basalt Deep Learning Reference Manual
+@subtitle Version 0.1.0
+@author Kival (@email{Kival@@basalt-dl.org})
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top Basalt Deep Learning Reference Manual
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Overview::               Introduction, license, and Bellows relationship.
+* Tutorial::               Quick-start guide for C++, C, CLI, and Python.
+* Internals::              Engine architecture, Bellows bridge, and autograd.
+* Core API::               Version, errors, dtypes, devices, and RNG.
+* Tensors and Operations:: N-dimensional strided tensors and math operations.
+* Autograd Engine::        Dynamic reverse-mode and higher-order gradients.
+* Neural Network Layers::  Modules, layers, attention, and initializers.
+* Optimization and Losses:: Losses, Bellows metrics, optimizers, schedulers.
+* Training and IO::        Data pipeline, AMP, checkpoints, ONNX, and Trainer.
+* C API and CLI Tools::    Stable C ABI (libbasalt-c) and command-line tools.
+* Type Index::             Index of all public classes, structs, and enums.
+* Function Index::         Index of all public functions and methods.
+@end menu
+
+@node Overview
+@chapter Overview
+
+Basalt Deep Learning is a portable C++20 deep-learning framework licensed
+under the GNU General Public License version 3 or later (GPLv3+).  It is
+built on top of the @emph{Bellows} C++ machine-learning library and its
+transitive @emph{Hyper Math} scientific computing engine.
+
+Basalt Deep Learning adheres strictly to the GNU Coding Standards as an
+engineering, formatting, build-system, and documentation discipline.  It is
+an independent project and is @strong{not} part of, endorsed by, or
+affiliated with the GNU Project.
+
+@section Key Capabilities
+@itemize @bullet
+@item
+Multi-dtype N-dimensional strided @code{basalt::Tensor} with zero-copy views
+and NumPy/PyTorch-compatible broadcasting over Bellows @code{slab_buffer}
+arenas.
+@item
+Dynamic reverse-mode automatic differentiation with higher-order derivatives
+(@code{create_graph = true}), @code{No_Grad_Guard}, @code{Enable_Grad_Guard},
+activation @code{checkpoint}, and finite-difference @code{gradcheck}.
+@item
+Comprehensive @code{basalt::nn} module library including @code{Linear},
+@code{Conv1d}/@code{2d}/@code{3d}, pooling, @code{Batch_Norm},
+@code{Layer_Norm}, @code{Group_Norm}, @code{RMS_Norm},
+@code{Multihead_Attention}, @code{Transformer_Encoder}, and
+@code{Transformer_Decoder}.
+@item
+First-order and adaptive optimizers (@code{SGD}, @code{Adam}, @code{AdamW},
+@code{RMSprop}, @code{Adagrad}, @code{LAMB}) and learning-rate schedulers
+(@code{Step_LR}, @code{Cosine_Annealing_LR}, @code{One_Cycle_LR},
+@code{Linear_Warmup_LR}, @code{Reduce_LR_On_Plateau}).
+@item
+Versioned FNV-1a checksummed checkpoints (@file{.bckpt}), Hugging Face
+Safetensors (@file{.safetensors}), and ONNX (@file{.onnx}) import/export.
+@item
+Lightning-style @code{basalt::Trainer}, mixed precision (@code{Float16} and
+@code{BFloat16}), multi-device @code{Data_Parallel}, a stable C ABI
+(@code{libbasalt-c}), CLI utilities (@command{basalt-train},
+@command{basalt-inspect}, @command{basalt-convert}), and optional
+@code{pybind11} Python bindings (@code{import basalt}).
+@end itemize
+
+@node Tutorial
+@chapter Tutorial
+
+@section Building and Installing
+Basalt Deep Learning uses the standard GNU Autotools workflow:
+
+@example
+./configure --prefix=/usr/local
+make -j4
+make check
+make install
+@end example
+
+@section Training a Model in C++20
+Include @code{<basalt/basalt.hpp>}, subclass @code{basalt::Trainable_Module},
+and pass a @code{basalt::data::Data_Loader} to @code{basalt::Trainer::fit}:
+
+@example
+#include <basalt/basalt.hpp>
+
+int
+main (void)
+@{
+  basalt::seed_everything (42);
+  basalt::Tensor x = basalt::randn (@{32, 4@});
+  basalt::Tensor w = basalt::randn (@{4, 1@}).set_requires_grad (true);
+  basalt::Tensor y = basalt::ops::matmul (x, w);
+  basalt::Tensor loss = basalt::ops::mean (basalt::ops::square (y));
+  loss.backward ();
+  return 0;
+@}
+@end example
+
+@node Internals
+@chapter Internals
+
+@section Bellows Engine Integration
+Basalt Deep Learning never duplicates functionality already provided by
+Bellows or Hyper Math:
+@itemize @bullet
+@item
+CPU memory allocations are backed by 64-byte aligned
+@code{hyper_math::slab_buffer<uint8_t>} inside
+@code{basalt::bellows_compat::Bellows_Storage}.
+@item
+Parallel tensor kernels, batched GEMM, convolutions, and data-loader workers
+execute on @code{hyper_math::parallel_for} and @code{hyper_math::thread_pool}.
+@item
+Random number generation wraps @code{hyper_math::random_engine} (PCG64).
+@item
+Orthogonal weight initialization delegates to
+@code{hyper_math::scientific::linalg::qr}.
+@item
+Tabular dataset normalization delegates to
+@code{bellows::moment_normaliser}, evaluation metrics delegate to
+@code{bellows::evaluation}, and checkpoint integrity uses
+@code{bellows::compute_fnv1a_checksum}.
+@end itemize
+
+@section Dynamic Reverse-Mode Autograd
+Every differentiable operation constructs an @code{Autograd_Node} on the
+dynamic computation graph when @code{Grad_Mode::is_enabled ()} is true and any
+operand has @code{requires_grad () == true}.  Calling @code{backward ()}
+performs a topological sort from the root outputs, accumulates gradients into
+leaf @code{Autograd_Meta} slots, and verifies @code{Saved_Variable} version
+counters to catch illegal in-place mutations.
+
+@node Core API
+@chapter Core API
+
+@deftypefn {C Function} {const char *} basalt_version_string (void)
+@findex basalt_version_string
+Return the null-terminated version string derived from @code{AC_INIT} in
+@file{configure.ac}.
+@end deftypefn
+
+@deftypefn {C Function} int basalt_version_major (void)
+@findex basalt_version_major
+Return the major version component (@code{BASALT_VERSION_MAJOR}).
+@end deftypefn
+
+@deftypefn {C Function} int basalt_version_minor (void)
+@findex basalt_version_minor
+Return the minor version component (@code{BASALT_VERSION_MINOR}).
+@end deftypefn
+
+@deftypefn {C Function} int basalt_version_patch (void)
+@findex basalt_version_patch
+Return the patch version component (@code{BASALT_VERSION_PATCH}).
+@end deftypefn
+
+@deftp {Class} basalt::Basalt_Error
+@tindex Basalt_Error
+@tindex Invalid_Argument_Error
+@tindex Shape_Error
+@tindex Dtype_Error
+@tindex Device_Error
+@tindex IO_Error
+@tindex Autograd_Error
+Base exception class inheriting from @code{std::runtime_error}.  Subclasses
+include @code{Invalid_Argument_Error}, @code{Shape_Error}, @code{Dtype_Error},
+@code{Device_Error}, @code{IO_Error}, and @code{Autograd_Error}.
+@end deftp
+
+@deftypefn {Function} void basalt::report_diagnostic (const char *@var{file}, const std::string &@var{message})
+@findex report_diagnostic
+@findex report_tool_diagnostic
+@findex set_diagnostic_logging
+@findex diagnostic_logging_enabled
+Write @samp{basalt: @var{file}: @var{message}} to @code{stderr}.
+@code{report_tool_diagnostic} writes @samp{@var{program_name}: @var{message}}
+to @code{stderr}.
+@end deftypefn
+
+@deftp {Enum} basalt::Dtype
+@tindex Dtype
+@tindex Float16
+@tindex BFloat16
+Scalar data types: @code{Dtype::Float32}, @code{Dtype::Float64},
+@code{Dtype::Float16}, @code{Dtype::BFloat16}, @code{Dtype::Int32},
+@code{Dtype::Int64}, @code{Dtype::UInt8}, and @code{Dtype::Bool}.
+@end deftp
+
+@deftypefn {Function} size_t basalt::dtype_size (Dtype @var{dtype})
+@findex dtype_size
+@findex dtype_name
+@findex dtype_from_name
+@findex is_floating_point
+@findex is_integral
+@findex promote_dtypes
+@findex dtype_of
+Return the byte width of @var{dtype}.  Companion helpers @code{dtype_name},
+@code{dtype_from_name}, @code{is_floating_point}, @code{is_integral},
+@code{promote_dtypes}, and @code{dtype_of<T>} query and promote scalar types.
+@end deftypefn
+
+@deftp {Class} basalt::Device
+@tindex Device
+@tindex Device_Type
+Represents a compute device (@code{Device::cpu ()} or
+@code{Device::cuda (index)}).
+@end deftp
+
+@deftypefn {Function} bool basalt::cuda_is_available (void)
+@findex cuda_is_available
+@findex cuda_has_hardware_driver
+@findex cuda_device_count
+@findex set_virtual_cuda_device_count
+@findex device_synchronize
+Query runtime CUDA availability, device counts, and synchronize a device.
+@end deftypefn
+
+@deftp {Class} basalt::Random_Generator
+@tindex Random_Generator
+Deterministic PCG64 random number generator wrapping
+@code{hyper_math::random_engine}.
+@end deftp
+
+@deftypefn {Function} void basalt::seed_everything (uint64_t @var{seed})
+@findex seed_everything
+@findex default_generator
+Seed all thread-local and default deterministic random generators.
+@end deftypefn
+
+@node Tensors and Operations
+@chapter Tensors and Operations
+
+@deftp {Struct} basalt::Tensor_Options
+@tindex Tensor_Options
+@tindex Shape_Vector
+@tindex Stride_Vector
+Configuration struct holding @code{dtype}, @code{device}, and
+@code{requires_grad} for tensor creation.
+@end deftp
+
+@deftp {Class} basalt::Tensor
+@tindex Tensor
+Multi-dtype N-dimensional strided tensor handle backed by
+@code{Bellows_Storage}.  Provides zero-copy view methods (@code{view},
+@code{reshape}, @code{transpose}, @code{t}, @code{permute}, @code{slice},
+@code{narrow}, @code{select}, @code{squeeze}, @code{unsqueeze}, @code{expand},
+@code{broadcast_to}, @code{flatten}), device/dtype transfer (@code{to},
+@code{cpu}, @code{cuda}, @code{contiguous}, @code{clone}, @code{detach}),
+in-place mutations (@code{fill_}, @code{zero_}, @code{copy_}, @code{add_},
+@code{mul_}), and autograd methods (@code{backward}, @code{grad},
+@code{set_requires_grad}, @code{retain_grad}, @code{zero_grad}).
+@end deftp
+
+@deftypefn {Function} basalt::Tensor basalt::zeros (const Shape_Vector &@var{shape}, Tensor_Options @var{options})
+@findex empty
+@findex zeros
+@findex ones
+@findex full
+@findex zeros_like
+@findex ones_like
+@findex full_like
+@findex eye
+@findex arange
+@findex linspace
+@findex rand
+@findex randn
+@findex randint
+@findex from_blob
+@findex tensor
+@findex scalar_tensor
+@findex from_bellows_table
+@findex to_bellows_table
+@findex broadcast_shapes
+Factory functions constructing tensors on CPU or CUDA and bridging to and
+from @code{bellows::data_table}.
+@end deftypefn
+
+@deftypefn {Function} basalt::Tensor basalt::ops::matmul (const Tensor &@var{a}, const Tensor &@var{b})
+@findex add
+@findex sub
+@findex mul
+@findex div
+@findex pow
+@findex add_scalar
+@findex sub_scalar
+@findex rsub_scalar
+@findex mul_scalar
+@findex div_scalar
+@findex rdiv_scalar
+@findex pow_scalar
+@findex neg
+@findex abs
+@findex sign
+@findex square
+@findex sqrt
+@findex rsqrt
+@findex exp
+@findex log
+@findex log1p
+@findex expm1
+@findex sin
+@findex cos
+@findex tanh
+@findex sigmoid
+@findex relu
+@findex leaky_relu
+@findex elu
+@findex gelu
+@findex silu
+@findex mish
+@findex softplus
+@findex clamp
+@findex where
+@findex masked_fill
+@findex eq
+@findex ne
+@findex lt
+@findex le
+@findex gt
+@findex ge
+@findex allclose
+@findex sum
+@findex mean
+@findex var
+@findex max
+@findex min
+@findex argmax
+@findex argmin
+@findex logsumexp
+@findex softmax
+@findex log_softmax
+@findex matmul
+@findex bmm
+@findex addmm
+@findex dot
+@findex outer
+@findex norm
+@findex cat
+@findex stack
+@findex split
+@findex chunk
+@findex index_select
+@findex gather
+@findex tril
+@findex triu
+@findex pad2d
+Differentiable mathematical, reduction, linear-algebra, and indexing
+operations in @code{basalt::ops}.
+@end deftypefn
+
+@node Autograd Engine
+@chapter Autograd Engine
+
+@deftp {Class} basalt::Autograd_Node
+@tindex Autograd_Node
+@tindex Edge
+@tindex Saved_Variable
+@tindex Autograd_Meta
+@tindex Grad_Mode
+@tindex No_Grad_Guard
+@tindex Enable_Grad_Guard
+Reverse-mode computation graph node, edge, version-checked saved variable,
+and RAII gradient scope guards (@code{No_Grad_Guard},
+@code{Enable_Grad_Guard}).
+@end deftp
+
+@deftypefn {Function} void basalt::backward (const std::vector<Tensor> &@var{outputs}, const std::vector<Tensor> &@var{grad_outputs}, bool @var{retain_graph}, bool @var{create_graph})
+@findex backward
+@findex grad
+@findex checkpoint
+@findex gradcheck
+@findex gradgradcheck
+Execute reverse-mode automatic differentiation, compute higher-order
+gradients (@code{grad}), recompute activations during backward
+(@code{checkpoint}), and verify analytical gradients against central finite
+differences (@code{gradcheck}, @code{gradgradcheck}).
+@end deftypefn
+
+@node Neural Network Layers
+@chapter Neural Network Layers
+
+@deftypefn {Function} basalt::Tensor basalt::F::scaled_dot_product_attention (const Tensor &@var{query}, const Tensor &@var{key}, const Tensor &@var{value}, const Tensor &@var{attn_mask}, double @var{dropout_p}, bool @var{is_causal})
+@findex linear
+@findex conv1d
+@findex conv2d
+@findex conv3d
+@findex conv_transpose2d
+@findex max_pool1d
+@findex max_pool2d
+@findex max_pool3d
+@findex avg_pool1d
+@findex avg_pool2d
+@findex avg_pool3d
+@findex adaptive_avg_pool2d
+@findex batch_norm
+@findex layer_norm
+@findex group_norm
+@findex rms_norm
+@findex dropout
+@findex embedding
+@findex scaled_dot_product_attention
+@findex apply_rotary_pos_emb
+@findex cosine_similarity
+Stateless functional neural network operations in @code{basalt::F}.
+@end deftypefn
+
+@deftypefn {Function} {basalt::Tensor &} basalt::nn::init::kaiming_uniform_ (Tensor &@var{tensor}, double @var{a}, bool @var{fan_in_mode})
+@findex zeros_
+@findex ones_
+@findex constant_
+@findex uniform_
+@findex normal_
+@findex xavier_uniform_
+@findex xavier_normal_
+@findex kaiming_uniform_
+@findex kaiming_normal_
+@findex orthogonal_
+In-place parameter initialization routines in @code{basalt::nn::init}.
+@end deftypefn
+
+@deftp {Class} basalt::nn::Module
+@tindex Module
+@tindex State_Dict
+@tindex Sequential
+@tindex Module_List
+@tindex Module_Dict
+@tindex Identity
+@tindex Flatten
+@tindex Linear
+@tindex Conv1d
+@tindex Conv2d
+@tindex Conv3d
+@tindex Max_Pool1d
+@tindex Max_Pool2d
+@tindex Max_Pool3d
+@tindex Avg_Pool1d
+@tindex Avg_Pool2d
+@tindex Avg_Pool3d
+@tindex Adaptive_Avg_Pool2d
+@tindex Batch_Norm
+@tindex Batch_Norm1d
+@tindex Batch_Norm2d
+@tindex Batch_Norm3d
+@tindex Layer_Norm
+@tindex Group_Norm
+@tindex RMS_Norm
+@tindex ReLU
+@tindex Leaky_ReLU
+@tindex ELU
+@tindex GELU
+@tindex SiLU
+@tindex Mish
+@tindex Sigmoid
+@tindex Tanh
+@tindex Softmax
+@tindex Log_Softmax
+@tindex Dropout
+@tindex Embedding
+@tindex Multihead_Attention
+@tindex Transformer_Encoder_Layer
+@tindex Transformer_Decoder_Layer
+@tindex Transformer_Encoder
+@tindex Transformer_Decoder
+@tindex RNN
+@tindex LSTM
+@tindex GRU
+@tindex Rotary_Embedding
+@tindex RoPE
+@tindex KV_Cache
+@tindex Conv_Transpose2d
+@tindex Instance_Norm
+@tindex Instance_Norm1d
+@tindex Instance_Norm2d
+@tindex Instance_Norm3d
+Stateful neural network modules and containers in @code{basalt::nn}.
+@end deftp
+
+@node Optimization and Losses
+@chapter Optimization and Losses
+
+@deftp {Enum} basalt::loss::Reduction
+@tindex Reduction
+@tindex MSE_Loss
+@tindex L1_Loss
+@tindex Smooth_L1_Loss
+@tindex NLL_Loss
+@tindex Cross_Entropy_Loss
+@tindex BCE_With_Logits_Loss
+@tindex KL_Div_Loss
+@tindex Huber_Loss
+@tindex Cosine_Embedding_Loss
+Loss reduction modes (@code{Reduction::None}, @code{Reduction::Mean},
+@code{Reduction::Sum}) and loss module classes in @code{basalt::loss}.
+@end deftp
+
+@deftypefn {Function} basalt::Tensor basalt::loss::cross_entropy_loss (const Tensor &@var{logits}, const Tensor &@var{target}, Reduction @var{reduction}, int64_t @var{ignore_index}, double @var{label_smoothing})
+@findex mse_loss
+@findex l1_loss
+@findex smooth_l1_loss
+@findex nll_loss
+@findex cross_entropy_loss
+@findex bce_with_logits_loss
+@findex kl_div_loss
+@findex huber_loss
+@findex cosine_embedding_loss
+Numerically stable loss functions in @code{basalt::loss}.
+@end deftypefn
+
+@deftypefn {Function} double basalt::metrics::accuracy (const Tensor &@var{preds_or_logits}, const Tensor &@var{targets})
+@tindex Metric_Tracker
+@findex mean_squared_error
+@findex root_mean_squared_error
+@findex mean_absolute_error
+@findex explained_variance
+@findex accuracy
+@findex top_k_accuracy
+@findex balanced_f1_score
+@findex roc_auc_score
+@findex perplexity
+Evaluation metrics in @code{basalt::metrics} backed by @code{bellows}.
+@end deftypefn
+
+@deftp {Class} basalt::optim::Optimizer
+@tindex Optimizer
+@tindex SGD
+@tindex Adam
+@tindex AdamW
+@tindex RMSprop
+@tindex Adagrad
+@tindex LAMB
+@tindex LR_Scheduler
+@tindex Step_LR
+@tindex Exponential_LR
+@tindex Multi_Step_LR
+@tindex Cosine_Annealing_LR
+@tindex One_Cycle_LR
+@tindex Linear_Warmup_LR
+@tindex Reduce_LR_On_Plateau
+Optimization algorithms and learning-rate schedulers in @code{basalt::optim}.
+@end deftp
+
+@deftypefn {Function} double basalt::optim::clip_grad_norm_ (const std::vector<Tensor> &@var{parameters}, double @var{max_norm}, double @var{norm_type})
+@findex clip_grad_norm_
+@findex clip_grad_value_
+In-place gradient norm and value clipping utilities.
+@end deftypefn
+
+@node Training and IO
+@chapter Training and IO
+
+@deftp {Class} basalt::data::Data_Loader
+@tindex Batch
+@tindex Transform
+@tindex Normalize_Transform
+@tindex Compose_Transform
+@tindex Dataset
+@tindex Tensor_Dataset
+@tindex Tabular_Dataset
+@tindex Mmap_Dataset
+@tindex Data_Loader
+@findex default_collate
+Datasets, transforms, collate functions, POSIX @code{mmap} binary reader,
+and deterministic multi-threaded prefetching @code{Data_Loader}.
+@end deftp
+
+@deftp {Class} basalt::amp::Grad_Scaler
+@tindex Autocast_Mode
+@tindex Autocast_Guard
+@tindex Grad_Scaler
+@findex autocast_cast
+Automatic mixed-precision (@code{Float16}/@code{BFloat16}) scope guards and
+dynamic gradient loss scaler.
+@end deftp
+
+@deftypefn {Function} void basalt::io::save_checkpoint (const std::string &@var{path}, const Checkpoint &@var{ckpt})
+@tindex Checkpoint
+@findex save_checkpoint
+@findex load_checkpoint
+@findex save_model
+@findex load_model
+@findex save_safetensors
+@findex load_safetensors
+@findex export_onnx
+@findex import_onnx_weights
+@findex load_onnx_model
+@findex inspect_artifact
+Serialization functions for native checkpoints (@file{.bckpt}), Hugging Face
+Safetensors (@file{.safetensors}), and ONNX (@file{.onnx}) models.
+@end deftypefn
+
+@deftp {Class} basalt::distributed::Data_Parallel
+@tindex Data_Parallel
+@findex scatter
+@findex all_reduce_gradients
+@findex broadcast_parameters
+Multi-device data-parallel wrapper executing model replicas in parallel and
+synchronizing gradients across devices.
+@end deftp
+
+@deftp {Class} basalt::Trainer
+@tindex Logger
+@tindex Console_Logger
+@tindex CSV_Logger
+@tindex JSON_Lines_Logger
+@tindex Memory_Logger
+@tindex Callback
+@tindex Early_Stopping
+@tindex Model_Checkpoint
+@tindex LR_Monitor
+@tindex Optimizer_Configuration
+@tindex Trainable_Module
+@tindex Trainer_Config
+@tindex Trainer
+Lightning-style training loop orchestrator supporting callbacks, pluggable
+loggers, early stopping, checkpoint resume, mixed precision, gradient
+accumulation, and multi-device @code{Data_Parallel} training.
+@end deftp
+
+@node C API and CLI Tools
+@chapter C API and CLI Tools
+
+@section Stable C ABI (@code{libbasalt-c})
+@deftypefn {C Function} {const char *} basalt_last_error (void)
+@tindex basalt_status_t
+@tindex basalt_dtype_t
+@tindex basalt_device_type_t
+@tindex basalt_tensor_t
+@tindex basalt_mlp_t
+@findex basalt_last_error
+@findex basalt_seed_everything
+@findex basalt_tensor_create
+@findex basalt_tensor_zeros
+@findex basalt_tensor_ones
+@findex basalt_tensor_from_data
+@findex basalt_tensor_destroy
+@findex basalt_tensor_ndim
+@findex basalt_tensor_numel
+@findex basalt_tensor_shape
+@findex basalt_tensor_dtype
+@findex basalt_tensor_set_requires_grad
+@findex basalt_tensor_copy_to_host
+@findex basalt_tensor_item
+@findex basalt_tensor_add
+@findex basalt_tensor_mul
+@findex basalt_tensor_matmul
+@findex basalt_tensor_relu
+@findex basalt_tensor_sum
+@findex basalt_tensor_mean
+@findex basalt_tensor_backward
+@findex basalt_tensor_grad
+@findex basalt_mlp_create
+@findex basalt_mlp_destroy
+@findex basalt_mlp_forward
+@findex basalt_mlp_train_step
+@findex basalt_mlp_save
+@findex basalt_mlp_load
+C ABI functions declared in @code{<basalt/basalt_c.h>} and exported by
+@code{libbasalt-c}.
+@end deftypefn
+
+@section Command-Line Tools
+@itemize @bullet
+@item
+@command{basalt-train}: Train a model from the command line with support for
+@option{--epochs}, @option{--batch-size}, @option{--lr}, @option{--seed},
+@option{--output}, @option{--resume}, @option{--amp}, @option{--dry-run},
+@option{--verbose}, @option{--quiet}, @option{--help}, and
+@option{--version}.
+@item
+@command{basalt-inspect}: Inspect any @file{.bckpt}, @file{.safetensors}, or
+@file{.onnx} artifact.
+@item
+@command{basalt-convert}: Convert model weights between @file{.bckpt},
+@file{.safetensors}, and @file{.onnx}.
+@end itemize
+
+@node Type Index
+@unnumbered Type Index
+
+@printindex tp
+
+@node Function Index
+@unnumbered Function Index
+
+@printindex fn
+
+@bye

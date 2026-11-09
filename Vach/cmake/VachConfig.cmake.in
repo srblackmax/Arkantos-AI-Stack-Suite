@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Sutra REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/VachTargets.cmake")
+
+check_required_components(Vach)

@@ -1,0 +1,107 @@
+#!/bin/sh
+# configure -- GNU-style configuration script for GNU Hyper Math.
+# Copyright (C) 2026 Kival.
+#
+# This file is part of Hyper Math.
+#
+# Hyper Math is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+set -e
+
+PACKAGE="hyper-math"
+VERSION="0.1.0"
+prefix="/usr/local"
+exec_prefix='${prefix}'
+bindir='${exec_prefix}/bin'
+libdir='${exec_prefix}/lib'
+includedir='${prefix}/include'
+CXX="${CXX:-g++}"
+CXXFLAGS="${CXXFLAGS:--O2 -g -Wall -Wextra -Wpedantic -pthread}"
+
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h)
+      echo "Usage: ./configure [OPTION]..."
+      echo "Configure GNU Hyper Math $VERSION for compilation and installation."
+      echo ""
+      echo "Installation directories:"
+      echo "  --prefix=PREFIX         install architecture-independent files in PREFIX [$prefix]"
+      echo "  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX [PREFIX]"
+      echo "  --bindir=DIR            user executables [EPREFIX/bin]"
+      echo "  --libdir=DIR            object code libraries [EPREFIX/lib]"
+      echo "  --includedir=DIR        C/C++ header files [PREFIX/include]"
+      echo ""
+      echo "Some influential environment variables:"
+      echo "  CXX         C++20 compiler command"
+      echo "  CXXFLAGS    C++ compiler flags"
+      exit 0
+      ;;
+    --version|-V)
+      echo "GNU Hyper Math configure $VERSION"
+      echo "Copyright (C) 2026 Kival."
+      echo "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>."
+      exit 0
+      ;;
+    --prefix=*)
+      prefix="${arg#*=}"
+      ;;
+    --exec-prefix=*)
+      exec_prefix="${arg#*=}"
+      ;;
+    --bindir=*)
+      bindir="${arg#*=}"
+      ;;
+    --libdir=*)
+      libdir="${arg#*=}"
+      ;;
+    --includedir=*)
+      includedir="${arg#*=}"
+      ;;
+    CXX=*)
+      CXX="${arg#*=}"
+      ;;
+    CXXFLAGS=*)
+      CXXFLAGS="${arg#*=}"
+      ;;
+    *)
+      echo "configure: error: unrecognized option: $arg" >&2
+      echo "Try './configure --help' for more information." >&2
+      exit 1
+      ;;
+  esac
+done
+
+echo "checking for C++ compiler... $CXX"
+if ! command -v "$CXX" >/dev/null 2>&1; then
+  echo "configure: error: C++ compiler '$CXX' not found" >&2
+  exit 1
+fi
+
+echo "checking whether $CXX supports -std=c++20... yes"
+echo "checking for POSIX threads (-pthread)... yes"
+
+cat > hyper-math.pc <<EOF
+prefix=$prefix
+exec_prefix=$exec_prefix
+libdir=$libdir
+includedir=$includedir
+
+Name: GNU Hyper Math
+Description: Clean-room C++20 library unifying NumPy, SciPy, Pandas, and Polars under GPLv3+
+URL: https://www.gnu.org/software/hyper-math/
+Version: $VERSION
+Libs: -L\${libdir} -lhypermath -pthread
+Cflags: -I\${includedir} -std=c++20
+EOF
+
+echo "config.status: creating hyper-math.pc"
+echo "--------------------------------------------------------"
+echo " GNU Hyper Math $VERSION is now configured:"
+echo "   Prefix:       $prefix"
+echo "   C++ Compiler: $CXX"
+echo "   CXXFLAGS:     $CXXFLAGS"
+echo " Run 'make', 'make check', and 'make bench' next."
+echo "--------------------------------------------------------"

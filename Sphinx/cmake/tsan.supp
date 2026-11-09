@@ -1,0 +1,20 @@
+# Suppress false positives from uninstrumented CUDA driver and external GGUF/OpenMP/ALSA/TTS libraries under TSan
+called_from_lib:libcuda.so
+called_from_lib:libcudart.so
+called_from_lib:libllama.so
+called_from_lib:libggml.so
+called_from_lib:libggml-base.so
+called_from_lib:libggml-cpu.so
+called_from_lib:libggml-cuda.so
+called_from_lib:libgomp.so
+called_from_lib:libasound.so
+called_from_lib:libespeak-ng.so
+called_from_lib:libonnxruntime.so
+called_from_lib:libwhisper.so
+called_from_lib:libssh2.so
+called_from_lib:libsutra.so
+called_from_lib:libvach.so
+called_from_lib:libyantra.so
+called_from_lib:libdarshana.so
+race:sutra::v1::LlamaCppClient
+race:yantra::v1::DagScheduler
